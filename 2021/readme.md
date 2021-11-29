@@ -1,6 +1,6 @@
 # Advent of Code in Rust 2021
 
-## Prequsites
+## Prerequisites
 
 - Cargo
 - Rust

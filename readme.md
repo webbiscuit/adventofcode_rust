@@ -1,6 +1,6 @@
 # Advent of Code in Rust
 
-## Prequsites
+## Prerequisites
 
 - Cargo
 - Rust
