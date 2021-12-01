@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Measurements larger than the previous measurement: 7\n");
+    assert.stdout("Measurements larger than the previous measurement: 7\nMeasurements larger in 3 measurement window: 5\n");
 
     Ok(())
 }
