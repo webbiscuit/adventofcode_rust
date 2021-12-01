@@ -34,9 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let lines = stdin.lock().lines();
 
-    let parsed: Result<Vec<_>, Box<dyn Error>> = lines
-        .map(|line| -> Result<_, Box<dyn Error>> { Ok(line?.parse::<u32>()?) })
-        .collect();
+    let parsed = lines.map(|line| Ok(line?.parse::<u32>()?)).collect();
 
     match parsed {
         Ok(items) => {
