@@ -5,7 +5,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let lines = stdin.lock().lines();
 
-    let parsed = lines.map(|line| Ok(line?.parse::<u32>()?)).collect();
+    let parsed: Result<Vec<u32>, Box<dyn Error>> = lines.map(|line| Ok(line?.parse::<u32>()?)).collect();
 
     match parsed {
         Ok(p) => {
