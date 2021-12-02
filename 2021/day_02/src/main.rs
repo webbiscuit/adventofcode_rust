@@ -1,7 +1,5 @@
 use std::error::Error;
 use std::io::{self, prelude::*};
-
-use itertools::Itertools;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
@@ -29,31 +27,25 @@ impl FromStr for Direction {
 }
 
 fn calculate_depth_by_horizontal_position(dirs: &[Direction]) -> u32 {
-    let mut depth = 0;
-    let mut horizontal_position = 0;
-
-    dirs.iter().for_each(|d| match d {
-        Direction::Forward(x) => horizontal_position += x,
-        Direction::Up(x) => depth -= x,
-        Direction::Down(x) => depth += x,
-    });
+    let (horizontal_position, depth) =
+        dirs.iter()
+            .fold((0, 0), |(horizontal_position, depth), d| match d {
+                Direction::Forward(x) => (horizontal_position + x, depth),
+                Direction::Up(x) => (horizontal_position, depth - x),
+                Direction::Down(x) => (horizontal_position, depth + x),
+            });
 
     horizontal_position * depth
 }
 
 fn calculate_aimed_depth(dirs: &[Direction]) -> u32 {
-    let mut aim = 0;
-    let mut depth = 0;
-    let mut horizontal_position = 0;
-
-    dirs.iter().for_each(|d| match d {
-        Direction::Forward(x) => {
-            horizontal_position += x;
-            depth += aim * x
-        }
-        Direction::Up(x) => aim -= x,
-        Direction::Down(x) => aim += x,
-    });
+    let (_, horizontal_position, depth) =
+        dirs.iter()
+            .fold((0, 0, 0), |(aim, horizontal_position, depth), d| match d {
+                Direction::Forward(x) => (aim, horizontal_position + x, depth + aim * x),
+                Direction::Up(x) => (aim - x, horizontal_position, depth),
+                Direction::Down(x) => (aim + x, horizontal_position, depth),
+            });
 
     horizontal_position * depth
 }
