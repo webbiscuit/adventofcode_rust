@@ -12,10 +12,10 @@ enum Direction {
 }
 
 impl FromStr for Direction {
-    type Err = Box<Error>;
+    type Err = Box<dyn Error>;
 
-    fn from_str(input: &str) -> Result<Direction, Error<&str>> {
-        let split = input.split(' ');
+    fn from_str(input: &str) -> Result<Direction, Self::Err> {
+        let mut split = input.split(' ');
 
         let (dir, value) = (split.next().unwrap(), split.next().unwrap().parse::<u32>());
 
@@ -23,9 +23,39 @@ impl FromStr for Direction {
             "forward" => Ok(Direction::Forward(value.unwrap())),
             "up" => Ok(Direction::Up(value.unwrap())),
             "down" => Ok(Direction::Down(value.unwrap())),
-            _ => Err(Box::new("Error")),
+            _ => Err(format!("Cannot parse {}", dir).into()),
         }
     }
+}
+
+fn calculate_depth_by_horizontal_position(dirs: &[Direction]) -> u32 {
+    let mut depth = 0;
+    let mut horizontal_position = 0;
+
+    dirs.iter().for_each(|d| match d {
+        Direction::Forward(x) => horizontal_position += x,
+        Direction::Up(x) => depth -= x,
+        Direction::Down(x) => depth += x,
+    });
+
+    horizontal_position * depth
+}
+
+fn calculate_aimed_depth(dirs: &[Direction]) -> u32 {
+    let mut aim = 0;
+    let mut depth = 0;
+    let mut horizontal_position = 0;
+
+    dirs.iter().for_each(|d| match d {
+        Direction::Forward(x) => {
+            horizontal_position += x;
+            depth += aim * x
+        }
+        Direction::Up(x) => aim -= x,
+        Direction::Down(x) => aim += x,
+    });
+
+    horizontal_position * depth
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -36,15 +66,22 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(|line| Direction::from_str(&line.unwrap()))
         .collect();
 
-    // match parsed {
-    //     Ok(items) => {
-    //         println!("{:?}", items);
-    //     }
-    //     Err(e) => {
-    //         eprintln!("Error parsing file: {}", e);
-    //         return Err(e);
-    //     }
-    // }
+    match parsed {
+        Ok(dirs) => {
+            let depth_by_horizontal_position = calculate_depth_by_horizontal_position(&dirs);
+            println!(
+                "Final horizonal position by final depth: {}",
+                depth_by_horizontal_position
+            );
+
+            let aimed_depth = calculate_aimed_depth(&dirs);
+            println!("Aimed depth: {}", aimed_depth);
+        }
+        Err(e) => {
+            eprintln!("Error parsing file: {}", e);
+            return Err(e);
+        }
+    }
 
     Ok(())
 }

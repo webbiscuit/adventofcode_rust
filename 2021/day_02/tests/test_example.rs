@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Final horizonal position x final depth: 150");
+    assert.stdout("Final horizonal position by final depth: 150\nAimed depth: 900\n");
 
     Ok(())
 }
