@@ -3,10 +3,7 @@ use std::num::ParseIntError;
 
 fn calculate_power_consumption(report_items: &[u16]) -> u32 {
     let max = report_items.iter().max().unwrap();
-
     let max_ones = u16::BITS - max.leading_zeros();
-
-    // let max_ones = max.count_ones() as u32;
 
     let mut result = 0u32;
 
@@ -24,14 +21,11 @@ fn calculate_power_consumption(report_items: &[u16]) -> u32 {
         }
     }
 
-    // let mask = 1 << max_ones; //0b1111111111111 & max_ones;
-    let mask = 0b11111;
+    let mut mask = 0u32;
 
-    // println!("max: {:0b}", max);
-    // println!("max: {}", max_ones);
-    // println!("mask: {:0b}", mask);
-    // println!("x: {:0>12b}", result);
-    // println!("x: {:0>12b}", result ^ mask);
+    for n in 0..max_ones {
+        mask |= 1 << n;
+    }
 
     result * (result ^ mask)
 }
