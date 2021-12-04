@@ -194,15 +194,37 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // for board in &bingo_boards {
-    //     println!("{}", board)
-    // }
+    let mut loser: Option<BingoBoard> = None;
+    for n in &called_numbers {
+        bingo_boards.iter_mut().for_each(|board| {
+            board.mark_square(*n);
+        });
+
+        if bingo_boards.len() == 1 {
+            if bingo_boards[0].won() {
+                loser = Some(bingo_boards[0]);
+                break;
+            }
+        }
+
+        bingo_boards = bingo_boards
+            .iter()
+            .filter(|board| !board.won())
+            .cloned()
+            .collect();
+    }
 
     if let Some(winner) = winner {
         // println!("{}", winner);
         println!("Bingo! Final score: {}", winner.get_score());
     } else {
         println!("No winner");
+    }
+
+    if let Some(loser) = loser {
+        println!("Bongo! Final score of final card: {}", loser.get_score());
+    } else {
+        println!("No loser");
     }
 
     Ok(())
