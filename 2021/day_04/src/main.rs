@@ -44,87 +44,14 @@ impl BingoBoard {
     pub fn won(&self) -> bool {
         let square_index = self.get_square_index(self.last_num);
 
-        // println!("{:?}", self.board);
-        // println!("{:?}", square_index);
-
-        // let row_marked = self.board.iter().enumerate().all(|(ix, square)| {
-        //     let column_ix = ix % TOTAL_COLUMNS as usize;
-
-        //     self.board[column_ix].marked
-        // });
-
-        // let column_marked = self.board.iter().enumerate().all(|(ix, square)| {
-        //     let row_ix = 0 + (ix * TOTAL_COLUMNS as usize);
-
-        //     println!("{} {:?}", row_ix, self.board[row_ix as usize]);
-
-        //     self.board[row_ix].marked
-        // });
-
-        let mut won = true;
-
-        // for ix in 0..TOTAL_COLUMNS {
-        //     let column_ix = ix + (square_index as usize) % TOTAL_SQUARES as usize;
-
-        //     if !self.board[column_ix].marked {
-        //         won = false;
-        //         break;
-        //     }
-        // }
-
-        // for ix in square_index..(square_index + TOTAL_COLUMNS) {
-        // let max_column_ix = ((square_index + TOTAL_COLUMNS) % TOTAL_COLUMNS) + TOTAL_COLUMNS;
-        // x % 5 * x / 5
-        //((x / 5) + 1) * 5
-        // let max_column_ix = (1 + (square_index / TOTAL_COLUMNS)) * TOTAL_COLUMNS - 1;
-        // let min_column_ix = max_column_ix - TOTAL_COLUMNS + 1;
-
-        for ix in self.get_row_indices(square_index) {
-            println!("{}", square_index);
-            if !self.board[ix as usize].marked {
-                won = false;
-                break;
-            }
-        }
-
-        if !won {
-            won = true;
-            for ix in self.get_column_indices(square_index) {
-                println!("{}", square_index);
-                if !self.board[ix as usize].marked {
-                    won = false;
-                    break;
-                }
-            }
-        }
-
-        // if !won {
-        //     won = true;
-
-        //     for ix in (0..TOTAL_ROWS) {
-        //         println!("{}", ix);
-
-        //         let row_ix = (square_index + (ix * TOTAL_COLUMNS)) % TOTAL_SQUARES;
-
-        //         println!("{}", row_ix);
-        //         println!("{:?}", self.board[row_ix as usize]);
-
-        //         if !self.board[row_ix as usize].marked {
-        //             won = false;
-        //             break;
-        //         }
-        //     }
-        // }
-
-        // for ix in square_index..(square_index + TOTAL_ROWS) {
-        //     let row_ix = ix + TOTAL_COLUMNS % TOTAL_SQUARES;
-
-        //     println!("{} {:?}", row_ix, self.board[row_ix as usize]);
-
-        //     if !self.board[row_ix as usize].marked {
-        //         return false;
-        //     }
-        // }
+        let mut won = self
+            .get_row_indices(square_index)
+            .iter()
+            .all(|&ix| self.board[ix as usize].marked)
+            || self
+                .get_column_indices(square_index)
+                .iter()
+                .all(|&ix| self.board[ix as usize].marked);
 
         return won;
     }
@@ -140,7 +67,6 @@ impl BingoBoard {
         let mut indices = vec![];
 
         let min_column_ix = ((start_index / TOTAL_COLUMNS) * TOTAL_COLUMNS);
-        // let max_column_ix = min_column_ix + TOTAL_COLUMNS - 1;
 
         for ix in 0..TOTAL_COLUMNS {
             let row_ix = ((start_index - min_column_ix + ix) % (TOTAL_COLUMNS)) + min_column_ix;
