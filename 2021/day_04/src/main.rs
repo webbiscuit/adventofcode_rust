@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fmt;
 use std::io::{self, prelude::*};
 
 pub type SquareIndex = u8;
@@ -13,11 +14,36 @@ pub struct Square {
     marked: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 
 pub struct BingoBoard {
     board: [Square; TOTAL_SQUARES as usize],
     last_num: i32,
+}
+
+impl fmt::Display for BingoBoard {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Bingo Board:\n")?;
+        for row in 0..TOTAL_ROWS {
+            for col in 0..TOTAL_COLUMNS {
+                let ix: usize = (row * TOTAL_COLUMNS + col) as usize;
+                let square = &self.board[ix];
+
+                write!(
+                    f,
+                    "{0: >3}",
+                    if square.marked {
+                        "x".to_string()
+                    } else {
+                        square.value.to_string()
+                    }
+                )?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
+    }
 }
 
 impl BingoBoard {
@@ -39,30 +65,37 @@ impl BingoBoard {
 
     pub fn mark_square(&mut self, num: i32) {
         let square_index = self.get_square_index(num);
-        self.board[square_index as usize].marked = true;
-        self.last_num = num;
+
+        if let Some(square_index) = square_index {
+            self.board[square_index as usize].marked = true;
+            self.last_num = num;
+        }
     }
 
     pub fn won(&self) -> bool {
         let square_index = self.get_square_index(self.last_num);
 
-        let won = self
-            .get_row_indices(square_index)
-            .iter()
-            .all(|&ix| self.board[ix as usize].marked)
-            || self
-                .get_column_indices(square_index)
+        if let Some(square_index) = square_index {
+            let won = self
+                .get_row_indices(square_index)
                 .iter()
-                .all(|&ix| self.board[ix as usize].marked);
+                .all(|&ix| self.board[ix as usize].marked)
+                || self
+                    .get_column_indices(square_index)
+                    .iter()
+                    .all(|&ix| self.board[ix as usize].marked);
 
-        won
+            won
+        } else {
+            false
+        }
     }
 
-    fn get_square_index(&self, num: i32) -> SquareIndex {
+    fn get_square_index(&self, num: i32) -> Option<SquareIndex> {
         self.board
             .iter()
             .position(|&square| square.value == num)
-            .unwrap() as SquareIndex
+            .map(|ix| ix as SquareIndex)
     }
 
     fn get_row_indices(&self, start_index: SquareIndex) -> Vec<SquareIndex> {
@@ -150,18 +183,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut winner: Option<BingoBoard> = None;
 
-    for mut board in bingo_boards {
-        for n in &called_numbers {
+    'outer: for n in &called_numbers {
+        for board in &mut bingo_boards {
             board.mark_square(*n);
 
             if board.won() {
-                winner = Some(board);
-                break;
+                winner = Some(*board);
+                break 'outer;
             }
         }
     }
 
+    // for board in &bingo_boards {
+    //     println!("{}", board)
+    // }
+
     if let Some(winner) = winner {
+        // println!("{}", winner);
         println!("Bingo! Final score: {}", winner.get_score());
     } else {
         println!("No winner");
