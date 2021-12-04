@@ -13,6 +13,8 @@ pub struct Square {
     marked: bool,
 }
 
+#[derive(Debug)]
+
 pub struct BingoBoard {
     board: [Square; TOTAL_SQUARES as usize],
     last_num: i32,
@@ -44,7 +46,7 @@ impl BingoBoard {
     pub fn won(&self) -> bool {
         let square_index = self.get_square_index(self.last_num);
 
-        let mut won = self
+        let won = self
             .get_row_indices(square_index)
             .iter()
             .all(|&ix| self.board[ix as usize].marked)
@@ -53,7 +55,7 @@ impl BingoBoard {
                 .iter()
                 .all(|&ix| self.board[ix as usize].marked);
 
-        return won;
+        won
     }
 
     fn get_square_index(&self, num: i32) -> SquareIndex {
@@ -66,7 +68,7 @@ impl BingoBoard {
     fn get_row_indices(&self, start_index: SquareIndex) -> Vec<SquareIndex> {
         let mut indices = vec![];
 
-        let min_column_ix = ((start_index / TOTAL_COLUMNS) * TOTAL_COLUMNS);
+        let min_column_ix = (start_index / TOTAL_COLUMNS) * TOTAL_COLUMNS;
 
         for ix in 0..TOTAL_COLUMNS {
             let row_ix = ((start_index - min_column_ix + ix) % (TOTAL_COLUMNS)) + min_column_ix;
@@ -88,25 +90,81 @@ impl BingoBoard {
 
         indices
     }
+
+    pub fn get_score(&self) -> i32 {
+        let mut score = 0;
+
+        for square in self.board.iter() {
+            if !square.marked {
+                score += square.value;
+            }
+        }
+
+        score * self.last_num
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
-    let lines = stdin.lock().lines();
+    let mut lines = stdin.lock().lines();
 
-    let parsed: Result<Vec<u32>, Box<dyn Error>> =
-        lines.map(|line| Ok(line?.parse::<u32>()?)).collect();
+    let called_numbers = lines
+        .next()
+        .unwrap()?
+        .split(',')
+        .map(|s| s.parse::<i32>().unwrap())
+        .collect::<Vec<_>>();
 
-    match parsed {
-        Ok(p) => {
-            for n in p {
-                println!("{}", n);
+    let mut cards: Vec<Vec<i32>> = vec![];
+    let mut current_card: Vec<i32> = vec![];
+
+    for line in lines {
+        let line = line?;
+
+        if line.is_empty() {
+            if !current_card.is_empty() {
+                cards.push(current_card);
+            }
+            current_card = vec![];
+        }
+
+        let nums = line
+            .split(' ')
+            .filter(|s| !s.is_empty())
+            .map(|s| s.parse::<i32>().unwrap())
+            .collect::<Vec<_>>();
+
+        current_card.extend(nums);
+    }
+
+    if !current_card.is_empty() {
+        cards.push(current_card);
+    }
+
+    let mut bingo_boards: Vec<BingoBoard> = vec![];
+
+    for card in cards {
+        let board = BingoBoard::new(&card.try_into().expect("slice with incorrect length"));
+        bingo_boards.push(board);
+    }
+
+    let mut winner: Option<BingoBoard> = None;
+
+    for mut board in bingo_boards {
+        for n in &called_numbers {
+            board.mark_square(*n);
+
+            if board.won() {
+                winner = Some(board);
+                break;
             }
         }
-        Err(e) => {
-            eprintln!("Error parsing file: {}", e);
-            return Err(e);
-        }
+    }
+
+    if let Some(winner) = winner {
+        println!("Bingo! Final score: {}", winner.get_score());
+    } else {
+        println!("No winner");
     }
 
     Ok(())
@@ -182,7 +240,7 @@ fn test_calculate_column_complete2() {
 
 #[test]
 fn test_row_indices() {
-    let mut board = BingoBoard::new(&[
+    let board = BingoBoard::new(&[
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     ]);
     assert_eq!(board.get_row_indices(0), vec![0, 1, 2, 3, 4]);
@@ -199,7 +257,7 @@ fn test_row_indices() {
 
 #[test]
 fn test_col_indices() {
-    let mut board = BingoBoard::new(&[
+    let board = BingoBoard::new(&[
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     ]);
     assert_eq!(board.get_column_indices(0), vec![0, 5, 10, 15, 20]);
