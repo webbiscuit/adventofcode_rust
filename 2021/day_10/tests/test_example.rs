@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Total syntax error score: 26397\n");
+    assert.stdout("Total syntax error score: 26397\nMiddle completion score: 288957\n");
 
     Ok(())
 }
