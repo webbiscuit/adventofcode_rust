@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Number of flashes after 100 steps: 1656\n");
+    assert.stdout("Number of flashes after 100 steps: 1656\nAll octopuses flash on turn: 195\n");
 
     Ok(())
 }

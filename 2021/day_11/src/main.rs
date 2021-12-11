@@ -18,7 +18,7 @@ pub struct OctopusGrid {
 }
 
 impl OctopusGrid {
-    pub fn new(octopus_energies: Vec<Vec<u8>>) -> OctopusGrid {
+    pub fn new(octopus_energies: &Vec<Vec<u8>>) -> OctopusGrid {
         OctopusGrid {
             octopus_energies: octopus_energies
                 .iter()
@@ -122,6 +122,12 @@ impl OctopusGrid {
             }
         }
     }
+
+    fn all_in_sync(&self) -> bool {
+        self.octopus_energies
+            .iter()
+            .all(|row| row.iter().all(|octopus| octopus.flashed == true))
+    }
 }
 
 impl fmt::Display for OctopusGrid {
@@ -157,7 +163,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(|l| parse_line(&l.unwrap()))
         .collect::<Vec<Vec<_>>>();
 
-    let mut octo_grid = OctopusGrid::new(octopuses);
+    let mut octo_grid = OctopusGrid::new(&octopuses);
 
     let mut total_score = 0;
 
@@ -168,13 +174,21 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Number of flashes after 100 steps: {}", total_score);
 
-    // println!("{}", octo_grid);
+    let mut octo_grid2 = OctopusGrid::new(&octopuses);
 
-    // octo_grid.step();
-    // println!("{}", octo_grid);
+    let mut turn = 1;
 
-    // octo_grid.step();
-    // println!("{}", octo_grid);
+    loop {
+        octo_grid2.step();
+
+        if octo_grid2.all_in_sync() {
+            break;
+        }
+
+        turn += 1;
+    }
+
+    println!("All octopuses flash on turn: {}", turn);
 
     Ok(())
 }
