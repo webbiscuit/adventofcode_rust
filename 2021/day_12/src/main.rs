@@ -25,12 +25,13 @@ impl CaveMaze {
             .push(src.to_string());
     }
 
-    pub fn explore_caves(&self) -> Vec<Vec<String>> {
-        let mut paths: Vec<Vec<String>> = vec![(vec!["start".to_string()])];
+    pub fn explore_caves(&self, max_small_cave_visits: u8) -> Vec<Vec<String>> {
+        let mut paths: Vec<(Vec<String>, i8)> =
+            vec![(vec!["start".to_string()], max_small_cave_visits as i8)];
         let mut complete_paths: Vec<Vec<String>> = vec![];
 
         while !paths.is_empty() {
-            let path = paths.pop().unwrap();
+            let (path, max_visits) = paths.pop().unwrap();
             let last_cave = path.last().unwrap();
 
             let exits = self.paths.get(last_cave).unwrap();
@@ -41,14 +42,29 @@ impl CaveMaze {
                     complete_path.push(exit.to_string());
 
                     complete_paths.push(complete_path);
+                } else if exit == "start" {
+                    continue;
                 } else if exit.chars().all(|c| c.is_ascii_uppercase()) || !path.contains(exit) {
                     let mut semi_complete_path = path.clone();
                     semi_complete_path.push(exit.to_string());
 
-                    paths.push(semi_complete_path)
+                    // println!("{:?}", semi_complete_path);
+                    // println!("{:?}", max_visits);
+
+                    paths.push((semi_complete_path, max_visits));
+                } else if max_visits > 1 {
+                    let mut semi_complete_path = path.clone();
+                    semi_complete_path.push(exit.to_string());
+
+                    // println!("{:?}", semi_complete_path);
+                    // println!("{:?}", max_visits);
+
+                    paths.push((semi_complete_path, max_visits - 1));
                 }
             }
         }
+
+        // println!("{:?}", complete_paths);
 
         complete_paths
     }
@@ -77,14 +93,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         maze.add_path(src, dest);
     }
 
-    let paths = maze.explore_caves();
+    let paths = maze.explore_caves(1);
     let path_count = paths.len();
 
     println!("Paths through the cave system: {}", path_count);
 
+    let paths2 = maze.explore_caves(2);
+    let path_count2 = paths2.len();
+
     println!(
         "Paths through the cave system with 2 small cave visits: {}",
-        path_count
+        path_count2
     );
 
     Ok(())
