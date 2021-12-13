@@ -14,7 +14,9 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Sum of the risk levels of all low points is 15\n");
+    assert.stdout(
+        "Sum of the risk levels of all low points is 15\nProduct of 3 largest basins is 1134\n",
+    );
 
     Ok(())
 }
