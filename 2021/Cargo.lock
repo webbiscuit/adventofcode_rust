@@ -43,6 +43,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "counter"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "698f7363cfc52779c375902ea6bc8b407f4b0b43be34e83cfdc8231a0e7545fe"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "day_01"
 version = "0.1.0"
 dependencies = [
@@ -157,6 +166,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "day_14"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "counter",
+ "itertools 0.9.0",
+]
+
+[[package]]
+name = "day_15"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "counter",
+ "itertools 0.9.0",
+]
+
+[[package]]
+name = "day_16"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "hex",
+ "itertools 0.9.0",
+]
+
+[[package]]
+name = "day_18"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "itertools 0.9.0",
+]
+
+[[package]]
 name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -182,6 +226,12 @@ checksum = "6398219c33c5768705156b8a69c99c463a51847e2d3647f5adce32bb6e990b1c"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "itertools"
