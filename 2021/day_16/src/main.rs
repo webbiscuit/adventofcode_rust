@@ -18,17 +18,32 @@ enum Payload {
     None
 }
 
-// impl fmt::Display for Payload {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         match self {
-//             Payload::Literal(v) => write!(f, "{}", v),
-//             Payload::Operator(v) => write!(f, "{:?}", v),
-//             _ => write!(f, "None"),
-//         };
+impl fmt::Display for Packet {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Packet")?;
+        writeln!(f, "Version: {}", self.version)?;
+        writeln!(f, "Type Id: {}", self.type_id)?;
+
+        match self.payload {
+            Payload::Literal(literal) => {
+                writeln!(f, "Type: Literal")?;
+                writeln!(f, "Literal: {}", literal)?;
+            },
+            Payload::Operator(ref packets) => {
+                writeln!(f, "Type: Operator")?;
+                for packet in packets {
+                    writeln!(f, ">> {}", packet)?;
+                }
+            },
+            Payload::None => {
+                writeln!(f, "Type: None")?;
+            }
+        }
+            
         
-//         Ok(())
-//     }
-// }
+        Ok(())
+    }
+}
 
 struct BitsSystem {
     message: Vec<bool>,
@@ -52,7 +67,7 @@ impl BitsSystem {
         let version = BitsSystem::to_value(&bits.drain(0..3).collect_vec()) as u8;
         let type_id = BitsSystem::to_value(&bits.drain(0..3).collect_vec()) as u8;
 
-        let mut payload: Payload = Payload::None;
+        let payload: Payload;
 
         match type_id {
             4 => payload = Payload::Literal(BitsSystem::parse_literal(bits)),
@@ -68,13 +83,12 @@ impl BitsSystem {
         let length_type = if bits.drain(0..1).next().unwrap() == true { 1  } else { 0 };
 
         if length_type == 0 {
-            let mut total_length_in_bits = BitsSystem::to_value(&bits.drain(0..15).collect_vec()) as i32;
+            let total_length_in_bits = BitsSystem::to_value(&bits.drain(0..15).collect_vec()) as usize;
             
-            let total_bits = bits.len();
+            let mut slice = bits.drain(0..total_length_in_bits).collect_vec();
 
-            while total_length_in_bits > 0 {
-                let packet = BitsSystem::parse_packet(bits);
-                total_length_in_bits -= total_bits as i32 - bits.len() as i32; 
+            while !slice.is_empty() {
+                let packet = BitsSystem::parse_packet(&mut slice);
                 packets.push(packet);
             }
         }
@@ -123,12 +137,17 @@ impl BitsSystem {
     }
 
     fn sum_version_for_packet(packet: &Packet) -> u32 {
-        match packet.payload {
+        let x = match packet.payload {
             Payload::Literal(v) => packet.version as u32,
             // Payload::Operator(ref packets) => packet.version as u32 + packets.iter().map(|p| BitsSystem::sum_version_for_packet(&p)).sum::<u32>(),
-            Payload::Operator(ref packets) => packet.version as u32 + packets.iter().fold(0,|acc, p| acc + BitsSystem::sum_version_for_packet(&p)),
-            _ => 0
-        }
+            Payload::Operator(ref packets) => packet.version as u32 + packets.iter().fold(0,|acc, p| { 
+                // println!("acc {}", acc);
+                acc + BitsSystem::sum_version_for_packet(&p)}),
+            _ => packet.version as u32
+        };
+
+        // println!("x {}", x);
+        x
     }
 
 }
@@ -153,6 +172,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // println!("{}", hex);
 
     let bits_system = BitsSystem::new(&hex);
+
+    // println!("{}", bits_system.get_packet());
 
     println!("Sum of version numbers in all packets: {}", bits_system.sum_version_numbers());
 
