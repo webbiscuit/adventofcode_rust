@@ -24,17 +24,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn median(nums: &mut [i32]) -> i32 {
-    nums.sort();
-    nums[nums.len() / 2]
+fn median(nums: &[i32]) -> i32 {
+    let mut copy = nums.to_vec();
+    copy.sort_unstable();
+    copy[copy.len() / 2]
 }
 
-fn mean(nums: &mut [i32]) -> f32 {
+fn mean(nums: &[i32]) -> f32 {
     let x = nums.iter().sum::<i32>() as f32 / nums.len() as f32;
     x
 }
 
-fn find_fuel_used_from_position(crabs: &Vec<i32>, position: i32) -> i32 {
+fn find_fuel_used_from_position(crabs: &[i32], position: i32) -> i32 {
     let fuel_used = crabs.iter().fold(0, |acc, &crab| {
         let distance = (crab - position).abs();
 
@@ -44,7 +45,7 @@ fn find_fuel_used_from_position(crabs: &Vec<i32>, position: i32) -> i32 {
     fuel_used
 }
 
-fn find_incremental_fuel_used_from_position(crabs: &Vec<i32>, position: i32) -> i32 {
+fn find_incremental_fuel_used_from_position(crabs: &[i32], position: i32) -> i32 {
     let fuel_used = crabs.iter().fold(0, |acc, &crab| {
         let distance = (crab - position).abs();
         let fuel_used_for_crab = (distance * (distance + 1)) / 2;
@@ -55,13 +56,13 @@ fn find_incremental_fuel_used_from_position(crabs: &Vec<i32>, position: i32) -> 
     fuel_used
 }
 
-fn find_fuel_used_in_optimal_crab_position(crabs: &Vec<i32>) -> i32 {
-    let best_position = median(&mut crabs.clone());
+fn find_fuel_used_in_optimal_crab_position(crabs: &[i32]) -> i32 {
+    let best_position = median(crabs);
     find_fuel_used_from_position(crabs, best_position)
 }
 
-fn find_incremental_fuel_used_in_optimal_crab_position(crabs: &Vec<i32>) -> i32 {
-    let best_position = mean(&mut crabs.clone());
+fn find_incremental_fuel_used_in_optimal_crab_position(crabs: &[i32]) -> i32 {
+    let best_position = mean(crabs);
     // println!("Best position: {}", best_position);
     let floor = find_incremental_fuel_used_from_position(crabs, best_position.floor() as i32);
     let ceil = find_incremental_fuel_used_from_position(crabs, best_position.ceil() as i32);
