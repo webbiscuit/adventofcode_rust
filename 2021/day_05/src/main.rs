@@ -3,7 +3,6 @@ use std::error::Error;
 use std::io::{self, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Copy, Eq, Hash)]
-
 pub struct Point {
     x: i32,
     y: i32,
@@ -16,7 +15,6 @@ impl Point {
 }
 
 #[derive(PartialEq, Debug)]
-
 pub struct Line {
     points: Vec<Point>,
 }
@@ -24,7 +22,7 @@ pub struct Line {
 impl Line {
     pub fn new(start_point: Point, end_point: Point) -> Line {
         let mut points = Vec::new();
-        let mut point = start_point.clone();
+        let mut point = start_point;
 
         loop {
             points.push(point);
@@ -33,16 +31,16 @@ impl Line {
                 break;
             }
 
-            if point.x < end_point.x {
-                point.x += 1;
-            } else if point.x > end_point.x {
-                point.x -= 1;
+            match point.x.cmp(&end_point.x) {
+                std::cmp::Ordering::Less => point.x += 1,
+                std::cmp::Ordering::Equal => (),
+                std::cmp::Ordering::Greater => point.x -= 1, 
             }
 
-            if point.y < end_point.y {
-                point.y += 1;
-            } else if point.y > end_point.y {
-                point.y -= 1;
+            match point.y.cmp(&end_point.y) {
+                std::cmp::Ordering::Less => point.y += 1,
+                std::cmp::Ordering::Equal => (),
+                std::cmp::Ordering::Greater => point.y -= 1, 
             }
 
             // println!("{:?}", point);
@@ -69,7 +67,7 @@ fn parse_line(line: &str) -> Line {
     let start_point_raw = points
         .next()
         .unwrap()
-        .split(",")
+        .split(',')
         .map(|x| x.parse::<i32>().unwrap())
         .collect::<Vec<i32>>();
     let start_point = Point::new(start_point_raw[0], start_point_raw[1]);
@@ -77,7 +75,7 @@ fn parse_line(line: &str) -> Line {
     let end_point_raw = points
         .next()
         .unwrap()
-        .split(",")
+        .split(',')
         .map(|x| x.parse::<i32>().unwrap())
         .collect::<Vec<i32>>();
     let end_point = Point::new(end_point_raw[0], end_point_raw[1]);
@@ -89,6 +87,12 @@ pub struct Grid {
     points_count: HashMap<Point, i64>,
 }
 
+impl Default for Grid {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Grid {
     pub fn new() -> Grid {
         Grid {
@@ -98,7 +102,7 @@ impl Grid {
 
     pub fn add_line(&mut self, line: &Line) {
         for point in line.get_points() {
-            let count = self.points_count.entry(point.clone()).or_insert(0);
+            let count = self.points_count.entry(*point).or_insert(0);
             *count += 1;
         }
     }
@@ -125,7 +129,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut grid = Grid::new();
 
     for line in vent_lines.iter().filter(|x| x.is_straight()) {
-        grid.add_line(&line);
+        grid.add_line(line);
     }
 
     println!(

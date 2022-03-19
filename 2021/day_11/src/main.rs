@@ -18,7 +18,7 @@ pub struct OctopusGrid {
 }
 
 impl OctopusGrid {
-    pub fn new(octopus_energies: &Vec<Vec<u8>>) -> OctopusGrid {
+    pub fn new(octopus_energies: &[Vec<u8>]) -> OctopusGrid {
         OctopusGrid {
             octopus_energies: octopus_energies
                 .iter()
@@ -126,7 +126,7 @@ impl OctopusGrid {
     fn all_in_sync(&self) -> bool {
         self.octopus_energies
             .iter()
-            .all(|row| row.iter().all(|octopus| octopus.flashed == true))
+            .all(|row| row.iter().all(|octopus| octopus.flashed))
     }
 }
 

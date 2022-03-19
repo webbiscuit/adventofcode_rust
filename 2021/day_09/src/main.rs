@@ -128,7 +128,7 @@ impl HeightMap {
             let mut neighbours = self.get_neighbours(x as u8, y as u8);
             let this_point = self.heights[x][y];
 
-            while neighbours.len() > 0 {
+            while !neighbours.is_empty() {
                 let neighbour = neighbours.pop().unwrap();
                 let mut neighbour_point = self.heights[neighbour.0 as usize][neighbour.1 as usize];
 
@@ -150,7 +150,7 @@ impl HeightMap {
             .flat_map(|r| r.iter().flat_map(|p| p.region))
             .collect_vec();
 
-        regions.sort();
+        regions.sort_unstable();
 
         regions = regions
             .iter()
@@ -159,7 +159,7 @@ impl HeightMap {
             .map(|(_, v)| v.count() as u8)
             .collect_vec();
 
-        regions.sort();
+        regions.sort_unstable();
         regions.reverse();
 
         regions[0] as u32 * regions[1] as u32 * regions[2] as u32

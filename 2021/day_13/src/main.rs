@@ -134,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut instructions = Vec::new();
 
     for line in lines.flatten() {
-        if line.contains(",") {
+        if line.contains(',') {
             let points = line
                 .split(',')
                 .map(|x| x.parse::<u32>().unwrap())
@@ -143,8 +143,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             paper.measure();
         }
 
-        if line.contains("=") {
-            let (dir, val) = line.split(" ").collect_vec()[2].split_once("=").unwrap();
+        if line.contains('=') {
+            let (dir, val) = line.split(' ').collect_vec()[2].split_once('=').unwrap();
             let instruction =
                 Instruction::new(dir.chars().next().unwrap(), val.parse::<u32>().unwrap());
             instructions.push(instruction);
@@ -160,8 +160,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Visible dots after first fold: {}", paper.count_points());
 
-    for i in 1..instructions.len() {
-        paper.apply_fold(&instructions[i]);
+    for instruction in instructions.iter().skip(1) {
+        paper.apply_fold(instruction);
     }
 
     println!("{}", paper);

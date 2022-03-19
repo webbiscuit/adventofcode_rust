@@ -3,7 +3,7 @@ use std::io::{self, prelude::*};
 
 type FishTimer = i8;
 
-fn count_lanternfish_after_days(fishies: &Vec<FishTimer>, days: u32) -> u64 {
+fn count_lanternfish_after_days(fishies: &[FishTimer], days: u32) -> u64 {
     let mut fishy_count = [0; 9];
 
     for fish in fishies {
@@ -12,7 +12,7 @@ fn count_lanternfish_after_days(fishies: &Vec<FishTimer>, days: u32) -> u64 {
 
     // println!("{:?}", fishy_count);
 
-    for day in 0..days {
+    for _ in 0..days {
         fishy_count.rotate_left(1);
         fishy_count[6] += fishy_count[8];
     }

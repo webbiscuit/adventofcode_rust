@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut completion_scores = nav_subsystem.iter().map(|s| {
         calculate_completion_score(s)
     }).collect::<Vec<_>>();
-    completion_scores.sort();
+    completion_scores.sort_unstable();
     completion_scores.retain(|&x| x != 0);
 
     // println!("Completion scores: {:?}", completion_scores);
@@ -30,6 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn is_syntax_legal(nav_string: &str) -> bool {
     find_first_illegal_character(nav_string) == None
 }
@@ -78,6 +79,7 @@ fn find_first_illegal_character(nav_string: &str) -> Option<char> {
     None
 }
 
+#[allow(dead_code)]
 fn is_syntax_complete(nav_string: &str) -> bool {
     find_completion_characters(nav_string).is_empty()
 }
@@ -140,6 +142,8 @@ fn test_find_valid_scores() {
 
 #[test]
 fn test_find_completion_scores() {
+    use itertools::Itertools;
+
     let nav = "<{([{{}}[<[[[<>{}]]]>[]]";
     assert_eq!(is_syntax_complete(&nav), false);
     assert_eq!(find_completion_characters(&nav), "])}>".chars().collect_vec());

@@ -2,7 +2,7 @@ use itertools::Itertools;
 use std::error::Error;
 use std::io::{self, prelude::*};
 
-fn count_consecutive_increments(depth_measurements: &Vec<u32>) -> u32 {
+fn count_consecutive_increments(depth_measurements: &[u32]) -> u32 {
     let mut total = 0u32;
 
     for (current, next) in depth_measurements.iter().tuple_windows() {
@@ -14,7 +14,7 @@ fn count_consecutive_increments(depth_measurements: &Vec<u32>) -> u32 {
     total
 }
 
-fn count_sums_larger_than_three_measurement_window(depth_measurements: &Vec<u32>) -> u32 {
+    fn count_sums_larger_than_three_measurement_window(depth_measurements: &[u32]) -> u32 {
     let mut total = 0u32;
 
     for (a, _, _, d) in depth_measurements.iter().tuple_windows() {
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let lines = stdin.lock().lines();
 
-    let parsed = lines.map(|line| Ok(line?.parse::<u32>()?)).collect();
+    let parsed: Result<Vec<_>, _> = lines.map(|line| Ok(line?.parse::<u32>()?)).collect();
 
     match parsed {
         Ok(items) => {

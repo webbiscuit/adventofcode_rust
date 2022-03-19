@@ -24,7 +24,7 @@ pub struct BingoBoard {
 impl fmt::Display for BingoBoard {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Bingo Board:\n")?;
+        writeln!(f, "Bingo Board:")?;
         for row in 0..TOTAL_ROWS {
             for col in 0..TOTAL_COLUMNS {
                 let ix: usize = (row * TOTAL_COLUMNS + col) as usize;
@@ -40,7 +40,7 @@ impl fmt::Display for BingoBoard {
                     }
                 )?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -200,11 +200,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             board.mark_square(*n);
         });
 
-        if bingo_boards.len() == 1 {
-            if bingo_boards[0].won() {
-                loser = Some(bingo_boards[0]);
-                break;
-            }
+        if bingo_boards.len() == 1 && bingo_boards[0].won() {
+            loser = Some(bingo_boards[0]);
+            break;          
         }
 
         bingo_boards = bingo_boards
