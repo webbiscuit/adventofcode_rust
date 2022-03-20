@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Digits 1,4,7,8 appear 26 times\n");
+    assert.stdout("Digits 1,4,7,8 appear 26 times\nThe output digit total is 61229\n");
 
     Ok(())
 }
