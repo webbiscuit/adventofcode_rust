@@ -1,6 +1,6 @@
 use std::cmp::min;
 use std::error::Error;
-use std::io::{self, prelude::*};
+use std::io;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
