@@ -6,8 +6,7 @@ fn calculate_hash(code: &str, value: u32) -> Digest {
     let mut hasher = md5::Context::new();
     hasher.consume(code);
     hasher.consume(value.to_string());
-    let hash = hasher.compute();
-    hash
+    hasher.compute()
 }
 
 fn find_hash(code: &str, prefix: &str) -> u32 {

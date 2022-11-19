@@ -38,7 +38,7 @@ fn is_nice2(s: &str) -> bool {
                 .zip(s.chars().skip(i + 3))
                 .any(|(c, d)| {
                     // println!("2 {} {} {}", i, c, d);
-                    return a == c && b == d;
+                    a == c && b == d
                 })
         });
 

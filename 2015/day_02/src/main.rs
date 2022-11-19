@@ -13,7 +13,7 @@ impl FromStr for Dimensions {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let items: Vec<&str> = s.split_terminator("x").collect();
+        let items: Vec<&str> = s.split_terminator('x').collect();
 
         let w = items[0].parse::<i32>()?;
         let h = items[1].parse::<i32>()?;
