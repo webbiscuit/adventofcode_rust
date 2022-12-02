@@ -36,6 +36,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "day_02"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+]
+
+[[package]]
 name = "day_0x"
 version = "0.1.0"
 dependencies = [
