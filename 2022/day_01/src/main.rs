@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::io::{self, prelude::*};
 
 #[derive(Debug)]
@@ -27,7 +26,7 @@ impl Elf {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
@@ -35,10 +34,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     lines.split(|l| l.is_empty()).for_each(|elf_data| {
         let mut elf = Elf::new();
-        elf_data.iter().for_each(|l| {
+        for l in elf_data {
             let calories = l.parse::<u32>().unwrap();
             elf.carry_food(Food { calories });
-        });
+        }
         elves.push(elf);
     });
 
@@ -63,9 +62,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "Calories carried by the three most calorific elves are {}.",
         fattest_three_elves
             .iter()
-            .map(|e| e.count_calories())
+            .map(Elf::count_calories)
             .sum::<u32>()
     );
-
-    Ok(())
 }
