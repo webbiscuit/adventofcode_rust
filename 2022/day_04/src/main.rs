@@ -3,15 +3,20 @@ use std::{
     ops::Range,
 };
 
-fn is_fully_contained_in(a: &Range<u32>, b: &Range<u32>) -> bool {
-    (a.start >= b.start && a.end <= b.end) || (b.start >= a.start && b.end <= a.end)
+fn contains(a: &Range<u32>, b: &Range<u32>) -> bool {
+    a.start >= b.start && a.end <= b.end
 }
 
-fn is_partially_contained_in(a: &Range<u32>, b: &Range<u32>) -> bool {
-    (a.start >= b.start && a.start <= b.end)
-        || (a.end >= b.start && a.end <= b.end)
-        || (b.start >= a.start && b.start <= a.end)
-        || (b.end >= a.start && b.end <= a.end)
+fn intersects(a: &Range<u32>, b: &Range<u32>) -> bool {
+    (a.start >= b.start && a.start <= b.end) || (a.end >= b.start && a.end <= b.end)
+}
+
+fn is_fully_contained_either_way(a: &Range<u32>, b: &Range<u32>) -> bool {
+    contains(a, b) || contains(b, a)
+}
+
+fn is_partially_contained_either_way(a: &Range<u32>, b: &Range<u32>) -> bool {
+    intersects(a, b) || intersects(b, a)
 }
 
 fn range_from_elf_string(s: &str) -> Range<u32> {
@@ -36,12 +41,14 @@ fn main() {
 
     let overlapping_range_count = ranges
         .iter()
-        .filter(|(elf1_range, elf2_range)| is_fully_contained_in(elf1_range, elf2_range))
+        .filter(|(elf1_range, elf2_range)| is_fully_contained_either_way(elf1_range, elf2_range))
         .count();
 
     let partial_overlapping_range_count = ranges
         .iter()
-        .filter(|(elf1_range, elf2_range)| is_partially_contained_in(elf1_range, elf2_range))
+        .filter(|(elf1_range, elf2_range)| {
+            is_partially_contained_either_way(elf1_range, elf2_range)
+        })
         .count();
 
     println!(
@@ -56,21 +63,21 @@ fn main() {
 
 #[test]
 fn test_ranges_fully_in() {
-    assert!(is_fully_contained_in(&(0..10), &(0..10)));
-    assert!(is_fully_contained_in(&(0..10), &(0..5)));
-    assert!(is_fully_contained_in(&(0..10), &(5..10)));
-    assert!(is_fully_contained_in(&(0..10), &(5..5)));
-    assert!(is_fully_contained_in(&(9..10), &(0..10)));
-    assert!(!is_fully_contained_in(&(9..10), &(0..9)));
+    assert!(is_fully_contained_either_way(&(0..10), &(0..10)));
+    assert!(is_fully_contained_either_way(&(0..10), &(0..5)));
+    assert!(is_fully_contained_either_way(&(0..10), &(5..10)));
+    assert!(is_fully_contained_either_way(&(0..10), &(5..5)));
+    assert!(is_fully_contained_either_way(&(9..10), &(0..10)));
+    assert!(!is_fully_contained_either_way(&(9..10), &(0..9)));
 }
 
 #[test]
 fn test_ranges_partially_in() {
-    assert!(is_partially_contained_in(&(0..10), &(0..10)));
-    assert!(is_partially_contained_in(&(0..10), &(0..5)));
-    assert!(is_partially_contained_in(&(0..10), &(5..10)));
-    assert!(is_partially_contained_in(&(0..10), &(5..5)));
-    assert!(is_fully_contained_in(&(9..10), &(0..10)));
-    assert!(is_partially_contained_in(&(9..10), &(0..9)));
-    assert!(!is_partially_contained_in(&(10..20), &(0..9)));
+    assert!(is_partially_contained_either_way(&(0..10), &(0..10)));
+    assert!(is_partially_contained_either_way(&(0..10), &(0..5)));
+    assert!(is_partially_contained_either_way(&(0..10), &(5..10)));
+    assert!(is_partially_contained_either_way(&(0..10), &(5..5)));
+    assert!(is_partially_contained_either_way(&(9..10), &(0..10)));
+    assert!(is_partially_contained_either_way(&(9..10), &(0..9)));
+    assert!(!is_partially_contained_either_way(&(10..20), &(0..9)));
 }
