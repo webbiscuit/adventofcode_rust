@@ -77,24 +77,71 @@ impl CraneArea {
     }
 }
 
+struct Instruction {
+    crate_count: usize,
+    from_stack_index: usize,
+    to_stack_index: usize,
+}
+
 fn main() {
     let stdin = io::stdin();
-    let lines = stdin.lock().lines();
+    let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
     let mut crane_area = CraneArea::new();
-    crane_area.add_crate_to_stack(1, 'Z');
-    crane_area.add_crate_to_stack(1, 'N');
-    crane_area.add_crate_to_stack(2, 'M');
-    crane_area.add_crate_to_stack(2, 'C');
-    crane_area.add_crate_to_stack(2, 'D');
-    crane_area.add_crate_to_stack(3, 'P');
 
-    crane_area.rearrange(1, 2, 1);
-    crane_area.rearrange(3, 1, 3);
-    crane_area.rearrange(2, 2, 1);
-    crane_area.rearrange(1, 1, 2);
+    let crate_count_ix = lines.iter().position(|l| l.starts_with(" 1 ")).unwrap();
+    let crate_count: usize = lines[crate_count_ix]
+        .split_whitespace()
+        .last()
+        .unwrap()
+        .parse()
+        .unwrap();
 
-    crane_area.draw();
+    // Count up from bottom of crate pic to make this easier
+    for line_index in (0..crate_count_ix).rev() {
+        let line = &lines[line_index];
+        for i in 1..=crate_count {
+            let index = (i - 1) * 4;
+            let crate_contents = line[index + 1..index + 3].chars().next().unwrap();
+            if crate_contents != ' ' {
+                crane_area.add_crate_to_stack(i, crate_contents);
+            }
+        }
+    }
+
+    let mut instructions = Vec::new();
+
+    for line in &lines[crate_count_ix + 1..] {
+        if line.starts_with("move") {
+            // println!("{:?}", line);
+
+            let mut parts = line.split_whitespace();
+            // println!("{:?}", parts);
+            parts.next();
+            let crate_count: usize = parts.next().unwrap().parse().unwrap();
+            parts.next();
+            let from_stack_index: usize = parts.next().unwrap().parse().unwrap();
+            parts.next();
+            let to_stack_index: usize = parts.next().unwrap().parse().unwrap();
+            instructions.push(Instruction {
+                crate_count,
+                from_stack_index,
+                to_stack_index,
+            });
+        }
+    }
+
+    // crane_area.draw();
+
+    for instruction in instructions {
+        crane_area.rearrange(
+            instruction.crate_count,
+            instruction.from_stack_index,
+            instruction.to_stack_index,
+        );
+    }
+
+    // crane_area.draw();
 
     println!("The top crates spell out {}.", crane_area.top_crates());
 }
