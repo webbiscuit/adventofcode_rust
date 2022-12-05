@@ -14,7 +14,9 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The top crates spell out CMZ.\n");
+    assert.stdout(
+        "The top crates using CrateMover 9000 spell out CMZ.\nThe top crates using CrateMover 9001 spell out MCD.\n",
+    );
 
     Ok(())
 }

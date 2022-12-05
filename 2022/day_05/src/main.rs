@@ -32,16 +32,48 @@ impl CraneArea {
             .push(crate_contents);
     }
 
+    fn add_crates_to_stack(&mut self, stack_index: usize, crate_contents: Vec<char>) {
+        while stack_index > self.crate_stacks.len() {
+            self.crate_stacks.push(CrateStack::new());
+        }
+
+        self.crate_stacks[stack_index - 1]
+            .crates
+            .append(&mut crate_contents.clone());
+    }
+
     fn take_crate_from_stack(&mut self, stack_index: usize) -> char {
         let stack = &mut self.crate_stacks[stack_index - 1];
         stack.crates.pop().unwrap()
     }
 
-    fn rearrange(&mut self, count: usize, from_stack_index: usize, to_stack_index: usize) {
+    fn take_crates_from_stack(&mut self, stack_index: usize, count: usize) -> Vec<char> {
+        let stack = &mut self.crate_stacks[stack_index - 1];
+        stack.crates.split_off(stack.crates.len() - count)
+    }
+
+    // CrateMover 9000 - can only move one crate at a time
+    fn rearrange_using_single_mover(
+        &mut self,
+        count: usize,
+        from_stack_index: usize,
+        to_stack_index: usize,
+    ) {
         for i in 0..count {
             let crate_contents = self.take_crate_from_stack(from_stack_index);
             self.add_crate_to_stack(to_stack_index, crate_contents);
         }
+    }
+
+    // CrateMover 9001 - can only move multiples crates at a time
+    fn rearrange_using_multi_mover(
+        &mut self,
+        count: usize,
+        from_stack_index: usize,
+        to_stack_index: usize,
+    ) {
+        let crate_contents = self.take_crates_from_stack(from_stack_index, count);
+        self.add_crates_to_stack(to_stack_index, crate_contents);
     }
 
     fn top_crates(&self) -> String {
@@ -88,6 +120,7 @@ fn main() {
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
     let mut crane_area = CraneArea::new();
+    let mut crane_area_9001 = CraneArea::new();
 
     let crate_count_ix = lines.iter().position(|l| l.starts_with(" 1 ")).unwrap();
     let crate_count: usize = lines[crate_count_ix]
@@ -105,6 +138,7 @@ fn main() {
             let crate_contents = line[index + 1..index + 3].chars().next().unwrap();
             if crate_contents != ' ' {
                 crane_area.add_crate_to_stack(i, crate_contents);
+                crane_area_9001.add_crate_to_stack(i, crate_contents);
             }
         }
     }
@@ -134,7 +168,13 @@ fn main() {
     // crane_area.draw();
 
     for instruction in instructions {
-        crane_area.rearrange(
+        crane_area.rearrange_using_single_mover(
+            instruction.crate_count,
+            instruction.from_stack_index,
+            instruction.to_stack_index,
+        );
+
+        crane_area_9001.rearrange_using_multi_mover(
             instruction.crate_count,
             instruction.from_stack_index,
             instruction.to_stack_index,
@@ -142,8 +182,10 @@ fn main() {
     }
 
     // crane_area.draw();
+    // crane_area_9001.draw();
 
-    println!("The top crates spell out {}.", crane_area.top_crates());
+    println!("The top crates using CrateMover 9000 spell out {}.", crane_area.top_crates());
+    println!("The top crates using CrateMover 9001 spell out {}.", crane_area_9001.top_crates());
 }
 
 #[test]
@@ -156,10 +198,10 @@ fn test_example() {
     crane_area.add_crate_to_stack(2, 'D');
     crane_area.add_crate_to_stack(3, 'P');
 
-    crane_area.rearrange(1, 2, 1);
-    crane_area.rearrange(3, 1, 3);
-    crane_area.rearrange(2, 2, 1);
-    crane_area.rearrange(1, 1, 2);
+    crane_area.rearrange_using_single_mover(1, 2, 1);
+    crane_area.rearrange_using_single_mover(3, 1, 3);
+    crane_area.rearrange_using_single_mover(2, 2, 1);
+    crane_area.rearrange_using_single_mover(1, 1, 2);
 
     crane_area.draw();
 
