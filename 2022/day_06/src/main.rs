@@ -4,16 +4,11 @@ use std::{
 };
 
 fn find_first_marker(unique_window_size: usize, input: &str) -> Option<usize> {
-    let mut ix = 0;
-    for char_check in input.as_bytes().windows(unique_window_size) {
-        let mut found = HashSet::new();
-        for c in char_check.iter() {
-            found.insert(*c);
-            if found.len() == unique_window_size {
-                return Some(ix + unique_window_size);
-            }
+    for (ix, char_check) in input.as_bytes().windows(unique_window_size).enumerate() {
+        let found: HashSet<&u8> = HashSet::from_iter(char_check.iter());
+        if found.len() == unique_window_size {
+            return Some(ix + unique_window_size);
         }
-        ix += 1;
     }
 
     None
