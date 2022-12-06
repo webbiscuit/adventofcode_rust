@@ -32,14 +32,14 @@ impl CraneArea {
             .push(crate_contents);
     }
 
-    fn add_crates_to_stack(&mut self, stack_index: usize, crate_contents: Vec<char>) {
+    fn add_crates_to_stack(&mut self, stack_index: usize, mut crate_contents: Vec<char>) {
         while stack_index > self.crate_stacks.len() {
             self.crate_stacks.push(CrateStack::new());
         }
 
         self.crate_stacks[stack_index - 1]
             .crates
-            .append(&mut crate_contents.clone());
+            .append(&mut crate_contents);
     }
 
     fn take_crate_from_stack(&mut self, stack_index: usize) -> char {
@@ -59,7 +59,7 @@ impl CraneArea {
         from_stack_index: usize,
         to_stack_index: usize,
     ) {
-        for i in 0..count {
+        for _i in 0..count {
             let crate_contents = self.take_crate_from_stack(from_stack_index);
             self.add_crate_to_stack(to_stack_index, crate_contents);
         }
