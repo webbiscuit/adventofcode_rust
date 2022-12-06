@@ -5,7 +5,7 @@ use std::{
 
 fn find_first_marker(unique_window_size: usize, input: &str) -> Option<usize> {
     for (ix, char_check) in input.as_bytes().windows(unique_window_size).enumerate() {
-        let found: HashSet<&u8> = HashSet::from_iter(char_check.iter());
+        let found = char_check.iter().collect::<HashSet<_>>();
         if found.len() == unique_window_size {
             return Some(ix + unique_window_size);
         }
