@@ -105,7 +105,7 @@ impl FileSystem {
         let mut directory_sizes: HashMap<String, DirectorySize> = HashMap::new();
 
         for (path, artefact) in self.file_index.iter() {
-            if let Artefact::Directory { name } = artefact {
+            if let Artefact::Directory { name: _ } = artefact {
                 if !directory_sizes.contains_key(path) {
                     directory_sizes.insert(
                         path.to_string(),
@@ -115,11 +115,11 @@ impl FileSystem {
                         },
                     );
                 }
-            } else if let Artefact::File { name, size } = artefact {
-                let mut dirs = path.split("/").collect::<Vec<&str>>();
+            } else if let Artefact::File { name: _, size } = artefact {
+                let mut dirs = path.split('/').collect::<Vec<&str>>();
                 dirs.pop();
                 dirs[0] = "/";
-                while dirs.len() > 0 {
+                while !dirs.is_empty() {
                     let path = Self::dir_parts_to_string(&dirs);
                     //println!("{:?} {}", path, name);
 
@@ -154,7 +154,7 @@ enum Command {
 
 fn main() {
     let stdin = io::stdin();
-    let mut lines = stdin.lock().lines();
+    let lines = stdin.lock().lines();
 
     let mut commands = Vec::new();
 
