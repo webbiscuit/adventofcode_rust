@@ -6,4 +6,4 @@ In which we simulate a rope moving around. This wasn't too bad! The head of the 
 
 ## Part 2
 
-Argh
+Argh! This proper made my brain melt and I had to draw this at some of the early steps to see what's going off. But it's the generic version of Part 1 and quite a nice problem. It's a small algorithm to create some pretty complex shapes.

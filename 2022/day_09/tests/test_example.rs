@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The tail of the rope has visited 13 locations.\n");
+    assert.stdout("The tail of the rope has visited 13 locations.\nThe tail of the long rope has visited 1 locations.\n");
 
     Ok(())
 }

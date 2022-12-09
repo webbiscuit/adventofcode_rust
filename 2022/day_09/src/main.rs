@@ -17,19 +17,25 @@ struct Vector {
 }
 
 struct Rope {
-    head: Vector,
-    tail: Vector,
+    knots: Vec<Vector>,
 
     tail_visited: HashSet<Vector>,
 }
 
 impl Rope {
-    fn new() -> Self {
+    fn new(knot_count: usize) -> Self {
         Self {
-            head: Vector { x: 0, y: 0 },
-            tail: Vector { x: 0, y: 0 },
+            knots: vec![Vector { x: 0, y: 0 }; knot_count],
             tail_visited: HashSet::new(),
         }
+    }
+
+    fn head(&self) -> Vector {
+        self.knots[0]
+    }
+
+    fn tail(&self) -> Vector {
+        *self.knots.last().unwrap()
     }
 
     fn process_command(&mut self, command: &Command) {
@@ -46,28 +52,46 @@ impl Rope {
         let rope_length = 1;
 
         for _ in 0..steps {
-            self.head.x += dx;
-            self.head.y += dy;
+            self.knots[0].x += dx;
+            self.knots[0].y += dy;
 
-            if (self.tail.x - self.head.x).abs() > rope_length {
-                self.tail.x += dx;
+            for i in 1..self.knots.len() {
+                if (self.knots[i].x - self.knots[i - 1].x).abs() > rope_length {
+                    self.knots[i].x += if self.knots[i].x < self.knots[i - 1].x {
+                        1
+                    } else {
+                        -1
+                    };
 
-                // Check diagonal yoinks
-                if self.tail.y != self.head.y {
-                    self.tail.y += self.head.y - self.tail.y;
+                    // Check diagonal yoinks
+                    if self.knots[i].y != self.knots[i - 1].y {
+                        self.knots[i].y += if self.knots[i].y < self.knots[i - 1].y {
+                            1
+                        } else {
+                            -1
+                        }
+                    }
+                }
+
+                if (self.knots[i].y - self.knots[i - 1].y).abs() > rope_length {
+                    self.knots[i].y += if self.knots[i].y < self.knots[i - 1].y {
+                        1
+                    } else {
+                        -1
+                    };
+
+                    // Check diagonal yoinks
+                    if self.knots[i].x != self.knots[i - 1].x {
+                        self.knots[i].x += if self.knots[i].x < self.knots[i - 1].x {
+                            1
+                        } else {
+                            -1
+                        }
+                    }
                 }
             }
 
-            if (self.tail.y - self.head.y).abs() > rope_length {
-                self.tail.y += dy;
-
-                // Check diagonal yoinks
-                if self.tail.x != self.head.x {
-                    self.tail.x += self.head.x - self.tail.x;
-                }
-            }
-
-            self.tail_visited.insert(self.tail);
+            self.tail_visited.insert(*self.knots.last().unwrap());
         }
     }
 
@@ -81,6 +105,24 @@ impl Rope {
             for x in min_x..=max_x {
                 if self.tail_visited.contains(&Vector { x, y }) {
                     print!("#");
+                } else {
+                    print!(".");
+                }
+            }
+            println!();
+        }
+    }
+
+    fn draw_positions(&self) {
+        let max_x = self.knots.iter().map(|v| v.x).max().unwrap();
+        let min_x = self.knots.iter().map(|v| v.x).min().unwrap();
+        let max_y = self.knots.iter().map(|v| v.y).max().unwrap();
+        let min_y = self.knots.iter().map(|v| v.y).min().unwrap();
+
+        for y in (min_y..=max_y).rev() {
+            for x in min_x..=max_x {
+                if let Some(pos) = self.knots.iter().position(|v| v == &Vector { x, y }) {
+                    print!("{}", pos);
                 } else {
                     print!(".");
                 }
@@ -109,19 +151,29 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    let mut rope = Rope::new();
+    let mut rope = Rope::new(2);
+    let mut long_rope = Rope::new(10);
     for command in commands {
         rope.process_command(&command);
+        long_rope.process_command(&command);
+
+        // println!("");
+        // long_rope.draw_positions();
     }
 
     let tail_location_count = rope.tail_visited.len();
+    let long_tail_location_count = long_rope.tail_visited.len();
 
-    // println!("{:?}", rope.tail_visited);
-    // rope.draw_tail_visits();
+    // long_rope.draw_tail_visits();
 
     println!(
         "The tail of the rope has visited {} locations.",
-        tail_location_count
+        tail_location_count,
+    );
+
+    println!(
+        "The tail of the long rope has visited {} locations.",
+        long_tail_location_count
     );
 }
 
@@ -131,137 +183,145 @@ mod tests {
 
     #[test]
     fn test_move_head_up() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 0, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 0, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 0, y: 2 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 1 });
+        assert_eq!(rope.head(), Vector { x: 0, y: 2 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 1 });
     }
 
     #[test]
     fn test_move_head_down() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (0, -1));
-        assert_eq!(rope.head, Vector { x: 0, y: -1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 0, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (0, -1));
-        assert_eq!(rope.head, Vector { x: 0, y: -2 });
-        assert_eq!(rope.tail, Vector { x: 0, y: -1 });
+        assert_eq!(rope.head(), Vector { x: 0, y: -2 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: -1 });
     }
 
     #[test]
     fn test_move_head_left() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (-1, 0));
-        assert_eq!(rope.head, Vector { x: -1, y: 0 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: -1, y: 0 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (-1, 0));
-        assert_eq!(rope.head, Vector { x: -2, y: 0 });
-        assert_eq!(rope.tail, Vector { x: -1, y: 0 });
+        assert_eq!(rope.head(), Vector { x: -2, y: 0 });
+        assert_eq!(rope.tail(), Vector { x: -1, y: 0 });
     }
 
     #[test]
     fn test_move_head_right() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (1, 0));
-        assert_eq!(rope.head, Vector { x: 1, y: 0 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 1, y: 0 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (1, 0));
-        assert_eq!(rope.head, Vector { x: 2, y: 0 });
-        assert_eq!(rope.tail, Vector { x: 1, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 2, y: 0 });
+        assert_eq!(rope.tail(), Vector { x: 1, y: 0 });
     }
 
     #[test]
     fn test_move_head_up_then_left() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 0, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 0, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (-1, 0));
-        assert_eq!(rope.head, Vector { x: -1, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: -1, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (-1, 0));
-        assert_eq!(rope.head, Vector { x: -2, y: 1 });
-        assert_eq!(rope.tail, Vector { x: -1, y: 1 });
+        assert_eq!(rope.head(), Vector { x: -2, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: -1, y: 1 });
     }
 
     #[test]
     fn test_move_head_up_then_right() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 0, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 0, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (1, 0));
-        assert_eq!(rope.head, Vector { x: 1, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 1, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (1, 0));
-        assert_eq!(rope.head, Vector { x: 2, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 1, y: 1 });
+        assert_eq!(rope.head(), Vector { x: 2, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 1, y: 1 });
     }
 
     #[test]
     fn test_move_head_down_then_left() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (0, -1));
-        assert_eq!(rope.head, Vector { x: 0, y: -1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 0, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (-1, 0));
-        assert_eq!(rope.head, Vector { x: -1, y: -1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: -1, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (-1, 0));
-        assert_eq!(rope.head, Vector { x: -2, y: -1 });
-        assert_eq!(rope.tail, Vector { x: -1, y: -1 });
+        assert_eq!(rope.head(), Vector { x: -2, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: -1, y: -1 });
     }
 
     #[test]
     fn test_move_head_down_then_right() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(1, (0, -1));
-        assert_eq!(rope.head, Vector { x: 0, y: -1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 0, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (1, 0));
-        assert_eq!(rope.head, Vector { x: 1, y: -1 });
-        assert_eq!(rope.tail, Vector { x: 0, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 1, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
 
         rope.move_head(1, (1, 0));
-        assert_eq!(rope.head, Vector { x: 2, y: -1 });
-        assert_eq!(rope.tail, Vector { x: 1, y: -1 });
+        assert_eq!(rope.head(), Vector { x: 2, y: -1 });
+        assert_eq!(rope.tail(), Vector { x: 1, y: -1 });
     }
 
     #[test]
     fn test_move_right_then_up_multiple() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(2);
         rope.move_head(4, (1, 0));
-        assert_eq!(rope.head, Vector { x: 4, y: 0 });
-        assert_eq!(rope.tail, Vector { x: 3, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 4, y: 0 });
+        assert_eq!(rope.tail(), Vector { x: 3, y: 0 });
 
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 4, y: 1 });
-        assert_eq!(rope.tail, Vector { x: 3, y: 0 });
+        assert_eq!(rope.head(), Vector { x: 4, y: 1 });
+        assert_eq!(rope.tail(), Vector { x: 3, y: 0 });
 
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 4, y: 2 });
-        assert_eq!(rope.tail, Vector { x: 4, y: 1 });
+        assert_eq!(rope.head(), Vector { x: 4, y: 2 });
+        assert_eq!(rope.tail(), Vector { x: 4, y: 1 });
 
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 4, y: 3 });
-        assert_eq!(rope.tail, Vector { x: 4, y: 2 });
+        assert_eq!(rope.head(), Vector { x: 4, y: 3 });
+        assert_eq!(rope.tail(), Vector { x: 4, y: 2 });
 
         rope.move_head(1, (0, 1));
-        assert_eq!(rope.head, Vector { x: 4, y: 4 });
-        assert_eq!(rope.tail, Vector { x: 4, y: 3 });
+        assert_eq!(rope.head(), Vector { x: 4, y: 4 });
+        assert_eq!(rope.tail(), Vector { x: 4, y: 3 });
+    }
+
+    #[test]
+    fn test_long_rope() {
+        let mut rope = Rope::new(10);
+        rope.move_head(5, (1, 0));
+        assert_eq!(rope.head(), Vector { x: 5, y: 0 });
+        assert_eq!(rope.tail(), Vector { x: 0, y: 0 });
     }
 }
