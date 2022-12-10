@@ -3,18 +3,27 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
+fn read_file(filename: &str) -> String {
+    let mut file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    file_path.push(filename);
+    let mut file = File::open(file_path).unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).unwrap();
+    contents
+}
+
 #[test]
 fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("day_10")?;
 
-    let mut file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    file_path.push("example.txt");
-    let mut file = File::open(file_path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+    let input = read_file("example.txt");
+    let output = read_file("example_out.txt");
 
-    let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The sum of the six signal strengths is 13140.\n");
+    let assert = cmd.write_stdin(input).assert();
+    assert.stdout(format!(
+        "The sum of the six signal strengths is 13140.\n\n{}\n",
+        output
+    ));
 
     Ok(())
 }
