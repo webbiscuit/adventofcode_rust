@@ -1,5 +1,3 @@
-use core::cmp::max;
-use core::cmp::min;
 use std::io::{self, prelude::*};
 
 type TreeSize = u8;
@@ -11,8 +9,15 @@ struct Grid {
 }
 
 struct Point {
-    x: usize,
-    y: usize,
+    x: i32,
+    y: i32,
+}
+
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 impl Grid {
@@ -39,35 +44,15 @@ impl Grid {
         }
     }
 
-    fn is_visible_from(&self, from: Point, to: Point) -> bool {
-        for y in min(from.y, to.y)..=max(from.y, to.y) {
-            for x in min(from.x, to.x)..=max(from.x, to.x) {
-                if x == from.x && y == from.y {
-                    continue;
-                }
-                if self.get(from.x, from.y) <= self.get(x, y) {
-                    return false;
-                }
-            }
-        }
-
-        true
-    }
-
-    fn count_trees_visible(&self, from: Point, to: Point) -> usize {
-        let mut tree_count = 0;
-        // TODO
-
-        tree_count
-    }
-
     fn find_visible_trees_from_outside(&self) -> usize {
         let mut visible_trees = 0;
 
         for y in 1..self.height - 1 {
             for x in 1..self.width - 1 {
-                let tree = self.get(x, y);
-                if self.is_visible_from_any_direction(x, y) {
+                if self.is_visible_from_any_direction(&Point {
+                    x: x as i32,
+                    y: y as i32,
+                }) {
                     visible_trees += 1;
                     // println!(
                     //     "Tree at ({}, {}) {} is visible from the outside.",
@@ -84,42 +69,81 @@ impl Grid {
         self.height * 2 + self.width * 2 - 4
     }
 
-    fn is_visible_from_any_direction(&self, x: usize, y: usize) -> bool {
-        self.is_visible_from(Point { x, y }, Point { x: 0, y })
-            || self.is_visible_from(Point { x, y }, Point { x, y: 0 })
-            || self.is_visible_from(
-                Point { x, y },
-                Point {
-                    x: self.width - 1,
-                    y,
-                },
-            )
-            || self.is_visible_from(
-                Point { x, y },
-                Point {
-                    x,
-                    y: self.height - 1,
-                },
-            )
+    fn get_trees_in_line(&self, from: &Point, dir: &Direction) -> Vec<TreeSize> {
+        let dir = match dir {
+            Direction::Up => Point { x: 0, y: -1 },
+            Direction::Down => Point { x: 0, y: 1 },
+            Direction::Left => Point { x: -1, y: 0 },
+            Direction::Right => Point { x: 1, y: 0 },
+        };
+
+        let mut tree_sizes = Vec::new();
+
+        let mut next = Point {
+            x: from.x + dir.x,
+            y: from.y + dir.y,
+        };
+
+        loop {
+            if next.x < 0
+                || next.x >= self.width as i32
+                || next.y < 0
+                || next.y >= self.height as i32
+            {
+                break;
+            }
+            tree_sizes.push(self.get(next.x as usize, next.y as usize));
+
+            next = Point {
+                x: next.x + dir.x,
+                y: next.y + dir.y,
+            };
+        }
+
+        tree_sizes
     }
 
-    fn calculate_scenic_score(&self, x: usize, y: usize) -> usize {
-        self.count_trees_visible(Point { x, y }, Point { x: 0, y })
-            * self.count_trees_visible(Point { x, y }, Point { x, y: 0 })
-            * self.count_trees_visible(
-                Point { x, y },
-                Point {
-                    x: self.width - 1,
-                    y,
-                },
-            )
-            * self.count_trees_visible(
-                Point { x, y },
-                Point {
-                    x,
-                    y: self.height - 1,
-                },
-            )
+    fn is_visible_from_any_direction(&self, point: &Point) -> bool {
+        let tree = self.get(point.x as usize, point.y as usize);
+
+        for dir in &[
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ] {
+            let trees_in_line = self.get_trees_in_line(point, dir);
+            let highest_tree = trees_in_line.iter().max().unwrap();
+            if &tree > highest_tree {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn calculate_scenic_score(&self, from: &Point) -> usize {
+        let mut scenic_score = 1;
+
+        for dir in &[
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ] {
+            let this_tree = self.get(from.x as usize, from.y as usize);
+            let trees_in_line = self.get_trees_in_line(from, dir);
+
+            let score = trees_in_line
+                .iter()
+                .position(|&x| x >= this_tree)
+                .unwrap_or(trees_in_line.len() - 1)
+                + 1;
+
+            scenic_score *= score;
+        }
+
+        scenic_score
     }
 
     fn calculate_scenic_scores(&self) -> Vec<usize> {
@@ -127,27 +151,41 @@ impl Grid {
 
         for y in 1..self.height - 1 {
             for x in 1..self.width - 1 {
-                scores[y * self.width + x] = self.calculate_scenic_score(x, y);
+                scores[y * self.width + x] = self.calculate_scenic_score(&Point {
+                    x: x as i32,
+                    y: y as i32,
+                });
 
-                println!("({}, {}) = {}", x, y, scores[y * self.width + x]);
+                //println!("({}, {}) = {}", x, y, scores[y * self.width + x]);
             }
         }
 
         scores
     }
 
-    fn draw(&self) {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                if self.is_visible_from_any_direction(x, y) {
-                    print!("{}", self.get(x, y));
-                } else {
-                    print!("X");
-                }
+    fn draw_scenic_scores(&self) {
+        let scores = self.calculate_scenic_scores();
+
+        for y in 1..self.height - 1 {
+            for x in 1..self.width - 1 {
+                print!("{}", scores[y * self.width + x]);
             }
             println!();
         }
     }
+
+    // fn draw(&self) {
+    //     for y in 0..self.height {
+    //         for x in 0..self.width {
+    //             if self.is_visible_from_any_direction(x, y) {
+    //                 print!("{}", self.get(x, y));
+    //             } else {
+    //                 print!("X");
+    //             }
+    //         }
+    //         println!();
+    //     }
+    // }
 }
 
 fn main() {
@@ -173,6 +211,8 @@ fn main() {
     );
 
     let scenic_scores = grid.calculate_scenic_scores();
+
+    //grid.draw_scenic_scores();
 
     println!(
         "The highest scenic score is {}.",

@@ -7,3 +7,4 @@ In which we detect the visibility of trees in a grid. Every year we have to do s
 ## Part 2
 
 This one is harder, I think I need to return all the heights in all directions (instead of just counts) and filter on that list, but I'm a bit tired now so I'll do that later.
+Update, I came back and spent ages on this for some reason. It was easier to get the trees in all directions first then do stuff on that list, rather than try to process it on the fly. I still struggled though.
