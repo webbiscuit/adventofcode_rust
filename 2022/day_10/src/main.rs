@@ -112,6 +112,21 @@ impl CpuMonitoring {
             None => self.current_state.x_state * cycle as i32,
         }
     }
+
+    fn draw(&self) {
+        for (cycle, snapshot) in self.monitor.iter().enumerate() {
+            if cycle % 40 == 0 {
+                println!();
+            }
+            let sprite_positions = [snapshot.x_state - 1, snapshot.x_state, snapshot.x_state + 1];
+            if sprite_positions.contains(&((cycle % 40) as i32)) {
+                print!("#");
+            } else {
+                print!(".");
+            }
+        }
+        println!();
+    }
 }
 
 fn main() {
@@ -147,6 +162,8 @@ fn main() {
         "The sum of the six signal strengths is {}.",
         total_signal_strength
     );
+
+    cpu_monitoring.draw();
 }
 
 #[cfg(test)]
@@ -175,15 +192,4 @@ mod tests {
 
         assert_eq!(expected, cpu_monitoring.calculate_signal_strength(cycle));
     }
-
-    // #[rstest]
-    // #[case(20, 420)]
-    // #[case(60, 1140)]
-    // #[case(100, 1800)]
-    // #[case(140, 2940)]
-    // #[case(180, 2880)]
-    // #[case(220, 3960)]
-    // fn test_signals(#[case] cycle: usize, #[case] expected: usize) {
-    //     assert_eq!(expected, find_first_marker(4, input).unwrap())
-    // }
 }
