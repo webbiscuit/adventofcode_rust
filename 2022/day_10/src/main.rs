@@ -4,15 +4,15 @@ use std::{
 };
 
 enum Instruction {
-    noop,
-    addx(i32),
+    Noop,
+    Addx(i32),
 }
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Instruction::noop => write!(f, "noop"),
-            Instruction::addx(value) => write!(f, "addx {}", value),
+            Instruction::Noop => write!(f, "noop"),
+            Instruction::Addx(value) => write!(f, "addx {}", value),
         }
     }
 }
@@ -20,8 +20,8 @@ impl fmt::Display for Instruction {
 impl Instruction {
     fn get_cycle_count(&self) -> usize {
         match self {
-            Instruction::noop => 1,
-            Instruction::addx(_) => 2,
+            Instruction::Noop => 1,
+            Instruction::Addx(_) => 2,
         }
     }
 }
@@ -46,13 +46,17 @@ impl Cpu {
     }
 
     fn execute(&mut self, instruction: &Instruction, monitoring: &mut CpuMonitoring) {
-        monitoring.add(self, instruction.get_cycle_count(), instruction.to_string());
+        monitoring.add(
+            self,
+            instruction.get_cycle_count(),
+            &instruction.to_string(),
+        );
 
         self.cycle += instruction.get_cycle_count();
 
         match instruction {
-            Instruction::noop => {}
-            Instruction::addx(value) => {
+            Instruction::Noop => {}
+            Instruction::Addx(value) => {
                 self.x_register += value;
             }
         }
@@ -84,7 +88,7 @@ impl CpuMonitoring {
         }
     }
 
-    fn add(&mut self, cpu: &Cpu, cycle_count: usize, action: String) {
+    fn add(&mut self, cpu: &Cpu, cycle_count: usize, action: &str) {
         for _ in 0..cycle_count {
             self.monitor.push(CpuSnapshot {
                 x_state: cpu.x_register,
@@ -137,13 +141,13 @@ fn main() {
         .map(|l| {
             let line = l.unwrap();
             if line == "noop" {
-                return Instruction::noop;
+                return Instruction::Noop;
             }
 
             let (command, value) = line.split_once(' ').unwrap();
             let value = value.parse::<i32>().unwrap();
             match command {
-                "addx" => Instruction::addx(value),
+                "addx" => Instruction::Addx(value),
                 _ => panic!("Unknown instruction: {}", command),
             }
         })
@@ -182,9 +186,9 @@ mod tests {
         let mut cpu = Cpu::new();
         let mut cpu_monitoring = CpuMonitoring::new();
         let instructions = vec![
-            Instruction::noop,
-            Instruction::addx(3),
-            Instruction::addx(-5),
+            Instruction::Noop,
+            Instruction::Addx(3),
+            Instruction::Addx(-5),
         ];
         cpu.run(&instructions, &mut cpu_monitoring);
 
