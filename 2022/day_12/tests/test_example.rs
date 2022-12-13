@@ -19,7 +19,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     let input = read_file("example.txt");
 
     let assert = cmd.write_stdin(input).assert();
-    assert.stdout("The fewest steps to get to the best signal are 31.\n");
+    assert.stdout("The fewest steps to get to the best signal are 31.\nThe shortest path to the best signal is 29.\n");
 
     Ok(())
 }

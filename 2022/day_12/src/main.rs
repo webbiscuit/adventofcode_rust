@@ -6,28 +6,6 @@ use std::{
 use pathfinding::prelude::astar;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
-struct Node {
-    height: usize,
-
-    steps_from_start: usize,
-    steps_to_end: usize,
-}
-
-impl Node {
-    fn new(height: usize) -> Node {
-        Node {
-            height,
-            steps_from_start: 0,
-            steps_to_end: 0,
-        }
-    }
-
-    fn score(&self) -> usize {
-        self.steps_from_start + self.steps_to_end
-    }
-}
-
-#[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
 struct Position {
     x: usize,
     y: usize,
@@ -35,8 +13,8 @@ struct Position {
 
 impl Position {
     fn steps_to(&self, other: &Position) -> usize {
-        let x_diff = (self.x as isize - other.x as isize).abs() as usize;
-        let y_diff = (self.y as isize - other.y as isize).abs() as usize;
+        let x_diff = (self.x as isize - other.x as isize).unsigned_abs();
+        let y_diff = (self.y as isize - other.y as isize).unsigned_abs();
 
         x_diff + y_diff
     }
@@ -63,7 +41,7 @@ impl Grid {
 
         for (y, line) in lines.iter().enumerate() {
             for (x, c) in line.chars().enumerate() {
-                let mut height = 0;
+                let height;
 
                 match c {
                     'S' => {
@@ -97,7 +75,13 @@ impl Grid {
     }
 
     fn walk_grid(&self, walker: &mut GridWalker) {
-        walker.walk(self);
+        walker.walk(self, self.start, self.end);
+    }
+
+    fn walk_grid_from_all(&self, from: Height, walker: &mut MultiGridWalker) {
+        for pos in self.node_heights.iter().filter(|(_, c)| **c == from) {
+            walker.add_walk(self, *pos.0, self.end);
+        }
     }
 
     fn get_neighbors(&self, pos: Position) -> Vec<Position> {
@@ -156,6 +140,7 @@ impl Grid {
     }
 }
 
+#[derive(Debug)]
 struct GridWalker {
     path: Option<(Vec<Position>, usize)>,
 }
@@ -165,15 +150,15 @@ impl GridWalker {
         GridWalker { path: None }
     }
 
-    fn walk(&mut self, grid: &Grid) {
-        let start = grid.start;
-        let goal = grid.end;
-
+    fn walk(&mut self, grid: &Grid, start: Position, goal: Position) {
         self.path = astar(
             &start,
             |p| {
                 grid.get_neighbors(*p)
                     .iter()
+                    .filter(|p2| {
+                        grid.get_node_height(p2.x, p2.y) <= grid.get_node_height(p.x, p.y) + 1
+                    })
                     .map(|p| (*p, 1))
                     .collect::<Vec<_>>()
             },
@@ -181,7 +166,7 @@ impl GridWalker {
             |p| *p == goal,
         );
 
-        println!("{:?}", self.path);
+        // println!("{:?}", self.path);
     }
 
     fn draw(&self, grid: &Grid) {
@@ -211,12 +196,29 @@ impl GridWalker {
                 if let Some((_, c)) = found {
                     print!("{}", c);
                     continue;
-                } else {
-                    print!(".");
                 }
+
+                print!(".");
             }
             println!();
         }
+    }
+}
+
+#[derive(Debug)]
+struct MultiGridWalker {
+    paths: Vec<GridWalker>,
+}
+
+impl MultiGridWalker {
+    fn new() -> MultiGridWalker {
+        MultiGridWalker { paths: Vec::new() }
+    }
+
+    fn add_walk(&mut self, grid: &Grid, start: Position, goal: Position) {
+        let mut walker = GridWalker::new();
+        walker.walk(grid, start, goal);
+        self.paths.push(walker);
     }
 }
 
@@ -228,16 +230,36 @@ fn main() {
     let mut walker = GridWalker::new();
     grid.walk_grid(&mut walker);
 
-    println!("{:?}", grid);
-    println!("{:?}", grid.get_node_height(0, 0));
+    // println!("{:?}", grid);
+    // println!("{:?}", grid.get_node_height(0, 0));
 
-    grid.draw();
-    walker.draw(&grid);
+    // grid.draw();
+    // walker.draw(&grid);
 
-    let fewest_steps = 0;
+    let fewest_steps = walker.path.unwrap().1;
+
+    let mut multi_walker = MultiGridWalker::new();
+    grid.walk_grid_from_all(0, &mut multi_walker);
+
+    // println!("{:?}", multi_walker);
+
+    let shortest_path_walker = multi_walker
+        .paths
+        .iter()
+        .filter(|w| w.path.is_some())
+        .min_by_key(|w| {
+            return match w.path.as_ref() {
+                Some(p) => p.1,
+                None => 0,
+            };
+        })
+        .unwrap();
+    let shortest_path = shortest_path_walker.path.as_ref().unwrap().1;
 
     println!(
         "The fewest steps to get to the best signal are {}.",
         fewest_steps
     );
+
+    println!("The shortest path to the best signal is {}.", shortest_path);
 }
