@@ -45,6 +45,7 @@ struct Cave {
     sand_spawn_point: Point,
     blockers: HashMap<Point, Blocker>,
     into_the_void: bool,
+    spawner_blocked: bool,
 }
 
 impl Cave {
@@ -53,6 +54,7 @@ impl Cave {
             blockers: HashMap::new(),
             sand_spawn_point: Point { x: 500, y: 0 },
             into_the_void: false,
+            spawner_blocked: false,
         }
     }
 
@@ -86,6 +88,11 @@ impl Cave {
                 sand = first_free_point;
             } else {
                 self.blockers.insert(sand, Blocker::Sand);
+
+                if sand == self.sand_spawn_point {
+                    self.spawner_blocked = true;
+                }
+
                 break;
             }
 
@@ -137,13 +144,34 @@ impl Cave {
         self.into_the_void
     }
 
+    fn spawner_blocked(&self) -> bool {
+        self.spawner_blocked
+    }
+
+    fn add_floor(&mut self) {
+        // This is the min/max that should work for all inputs but the drawing is not very nice
+        let min_x = 500 - (self.get_max_x() / 2); // self.get_min_x();
+        let min_y = 0;
+        let max_x = 500 + (self.get_max_x() / 2); // self.get_max_x();
+        let max_y = self.get_max_y();
+
+        self.add_walls(
+            &Point {
+                x: min_x,
+                y: max_y + 2,
+            },
+            &Point {
+                x: max_x,
+                y: max_y + 2,
+            },
+        );
+    }
+
     fn draw(&self) {
         let min_x = self.get_min_x();
         let min_y = 0;
         let max_x = self.get_max_x();
-        let max_y = self.get_max_y();
-
-        // println!("{} {} {} {}", minx, miny, maxx, maxy);
+        let max_y = self.get_max_y() + 2;
 
         for y in min_y..=max_y {
             for x in min_x..=max_x {
@@ -203,12 +231,27 @@ fn main() {
         cave.spawn_sand();
     }
 
-    // cave.draw();
-
     let sand_count = cave.count_sand();
 
     println!(
         "There are {} grains of sand before they fall into the void.",
         sand_count
+    );
+
+    cave.add_floor();
+
+    // cave.draw();
+
+    while !cave.spawner_blocked() {
+        cave.spawn_sand();
+    }
+
+    // cave.draw();
+
+    let sand_count2 = cave.count_sand();
+
+    println!(
+        "With a floor, there are {} grains of sand before the source is blocked.",
+        sand_count2
     );
 }

@@ -19,7 +19,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     let input = read_file("example.txt");
 
     let assert = cmd.write_stdin(input).assert();
-    assert.stdout("There are 24 grains of sand before they fall into the void.\n");
+    assert.stdout("There are 24 grains of sand before they fall into the void.\nWith a floor, there are 93 grains of sand before the source is blocked.\n");
 
     Ok(())
 }
