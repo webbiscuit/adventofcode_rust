@@ -11,6 +11,8 @@ struct Sensor {
     y: isize,
     closest_beacon: (isize, isize),
     distance_to_beacon: usize,
+    bounding_x_range: (isize, isize),
+    bounding_y_range: (isize, isize),
 }
 
 impl Sensor {
@@ -24,6 +26,14 @@ impl Sensor {
             y,
             closest_beacon,
             distance_to_beacon,
+            bounding_x_range: (
+                x - distance_to_beacon as isize,
+                x + distance_to_beacon as isize,
+            ),
+            bounding_y_range: (
+                y - distance_to_beacon as isize,
+                y + distance_to_beacon as isize,
+            ),
         }
     }
 }
@@ -56,12 +66,7 @@ fn main() {
         sensors.push(sensor);
     }
 
-    let max_distance = sensors.iter().map(|s| s.distance_to_beacon).max().unwrap();
-
-    let min_x = sensors.iter().map(|s| s.x).min().unwrap() - max_distance as isize;
-    let max_x = sensors.iter().map(|s| s.x).max().unwrap() + max_distance as isize;
-
-    // println!("{} - {}", min_x, max_x);
+    let mut no_x_beacon_ranges = Vec::<(isize, isize)>::new();
 
     let mut no_beacon_spaces = HashSet::<(isize, isize)>::new();
     let mut beacon_locations: HashSet<(isize, isize)> = sensors
@@ -69,8 +74,19 @@ fn main() {
         .map(|s| (s.closest_beacon.0, s.closest_beacon.1))
         .collect::<HashSet<_>>();
 
-    for x in min_x..=max_x {
-        for sensor in &sensors {
+    for sensor in &sensors {
+        if row < sensor.bounding_y_range.0 || row > sensor.bounding_y_range.1 {
+            continue;
+        }
+
+        // let offset = sensor.distance_to_beacon - row.abs_diff(sensor.y);
+
+        // no_x_beacon_ranges.push((
+        //     sensor.bounding_x_range.0 + offset as isize,
+        //     sensor.bounding_x_range.1 - offset as isize,
+        // ));
+
+        for x in sensor.bounding_x_range.0..=sensor.bounding_x_range.1 {
             let distance = sensor.distance_to_beacon;
 
             if sensor.x.abs_diff(x) + sensor.y.abs_diff(row) <= distance {
@@ -81,11 +97,25 @@ fn main() {
                 }
             }
         }
-
-        // println!("{}: {:?}", x, closest_beacon);
     }
 
-    // println!("{}: {:?}", row, no_beacon_spaces);
+    // for range in &no_x_beacon_ranges {
+    //     for x in range.0..=range.1 {
+    //         let coord = (x, row);
+
+    //         if !beacon_locations.contains(&coord) {
+    //             no_beacon_spaces.insert((x, row));
+    //         }
+    //     }
+    // }
+
+    // println!("{}: {:?}", row, no_x_beacon_ranges);
+    // println!("{:?}", no_beacon_spaces);
+
+    // println!("{}: {:?}", x, closest_beacon);
+    // }
+
+    // println!("{} {}: {:?}", row, no_beacon_spaces.len(), no_beacon_spaces);
 
     let no_beacons = no_beacon_spaces.len();
 
