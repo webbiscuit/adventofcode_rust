@@ -1,6 +1,7 @@
 use std::{
     collections::HashSet,
     env::args,
+    fmt::Debug,
     io::{self, BufRead},
 };
 
@@ -73,7 +74,38 @@ fn main() {
         .map(|s| (s.closest_beacon.0, s.closest_beacon.1))
         .collect::<HashSet<_>>();
 
-    for sensor in &sensors {
+    let no_beacon_spaces = find_no_beacon_spaces(&sensors, row, &beacon_locations);
+
+    let no_beacons = no_beacon_spaces.len();
+
+    println!(
+        "On row {}, there are {} positions where a beacon can not be present.",
+        row, no_beacons
+    );
+
+    let ys_to_check: Vec<(isize, isize)> = sensors.iter().map(|s| s.bounding_y_range).collect();
+    println!("{:?}", ys_to_check);
+
+    for r in 0..=20 {
+        let no_beacon_spaces = find_no_beacon_spaces(&sensors, r, &beacon_locations);
+
+        let no_beacons = no_beacon_spaces.len();
+
+        println!(
+            "On row {}, there are {} positions where a beacon can not be present.",
+            r, no_beacons
+        );
+    }
+}
+
+fn find_no_beacon_spaces(
+    sensors: &Vec<Sensor>,
+    row: isize,
+    beacon_locations: &HashSet<(isize, isize)>,
+) -> HashSet<isize> {
+    let mut no_x_beacon_ranges = Vec::<(isize, isize)>::new();
+
+    for sensor in sensors {
         if row < sensor.bounding_y_range.0 || row > sensor.bounding_y_range.1 {
             continue;
         }
@@ -89,12 +121,10 @@ fn main() {
             sensor.bounding_x_range.1 - offset as isize,
         ));
     }
-
     let mut no_beacon_spaces = no_x_beacon_ranges
         .iter()
         .flat_map(|range| range.0..=range.1)
         .collect::<HashSet<_>>();
-
     let removal_list = no_beacon_spaces
         .intersection(
             &beacon_locations
@@ -106,20 +136,12 @@ fn main() {
         )
         .copied()
         .collect::<HashSet<_>>();
-
     // for item in removal_list {
     //     no_beacon_spaces.remove(&item);
     // }
-
     no_beacon_spaces = no_beacon_spaces
         .difference(&removal_list)
         .copied()
         .collect();
-
-    let no_beacons = no_beacon_spaces.len();
-
-    println!(
-        "On row {}, there are {} positions where a beacon can not be present.",
-        row, no_beacons
-    )
+    no_beacon_spaces
 }
