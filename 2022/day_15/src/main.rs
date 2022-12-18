@@ -6,6 +6,7 @@ use std::{
 
 use regex::Regex;
 
+#[derive(Debug)]
 struct Sensor {
     x: isize,
     y: isize,
@@ -67,9 +68,7 @@ fn main() {
     }
 
     let mut no_x_beacon_ranges = Vec::<(isize, isize)>::new();
-
-    let mut no_beacon_spaces = HashSet::<(isize, isize)>::new();
-    let mut beacon_locations: HashSet<(isize, isize)> = sensors
+    let beacon_locations: HashSet<(isize, isize)> = sensors
         .iter()
         .map(|s| (s.closest_beacon.0, s.closest_beacon.1))
         .collect::<HashSet<_>>();
@@ -79,43 +78,43 @@ fn main() {
             continue;
         }
 
-        // let offset = sensor.distance_to_beacon - row.abs_diff(sensor.y);
+        let offset = row.abs_diff(sensor.y);
 
-        // no_x_beacon_ranges.push((
-        //     sensor.bounding_x_range.0 + offset as isize,
-        //     sensor.bounding_x_range.1 - offset as isize,
-        // ));
+        // if sensor.y == 7 && sensor.x == 8 {
+        //     println!("offset: {}", offset);
+        // }
 
-        for x in sensor.bounding_x_range.0..=sensor.bounding_x_range.1 {
-            let distance = sensor.distance_to_beacon;
-
-            if sensor.x.abs_diff(x) + sensor.y.abs_diff(row) <= distance {
-                let coord = (x, row);
-
-                if !beacon_locations.contains(&coord) {
-                    no_beacon_spaces.insert((x, row));
-                }
-            }
-        }
+        no_x_beacon_ranges.push((
+            sensor.bounding_x_range.0 + offset as isize,
+            sensor.bounding_x_range.1 - offset as isize,
+        ));
     }
 
-    // for range in &no_x_beacon_ranges {
-    //     for x in range.0..=range.1 {
-    //         let coord = (x, row);
+    let mut no_beacon_spaces = no_x_beacon_ranges
+        .iter()
+        .flat_map(|range| range.0..=range.1)
+        .collect::<HashSet<_>>();
 
-    //         if !beacon_locations.contains(&coord) {
-    //             no_beacon_spaces.insert((x, row));
-    //         }
-    //     }
+    let removal_list = no_beacon_spaces
+        .intersection(
+            &beacon_locations
+                .iter()
+                .copied()
+                .filter(|(_x, y)| *y == row)
+                .map(|(x, _y)| x)
+                .collect::<HashSet<_>>(),
+        )
+        .copied()
+        .collect::<HashSet<_>>();
+
+    // for item in removal_list {
+    //     no_beacon_spaces.remove(&item);
     // }
 
-    // println!("{}: {:?}", row, no_x_beacon_ranges);
-    // println!("{:?}", no_beacon_spaces);
-
-    // println!("{}: {:?}", x, closest_beacon);
-    // }
-
-    // println!("{} {}: {:?}", row, no_beacon_spaces.len(), no_beacon_spaces);
+    no_beacon_spaces = no_beacon_spaces
+        .difference(&removal_list)
+        .copied()
+        .collect();
 
     let no_beacons = no_beacon_spaces.len();
 
