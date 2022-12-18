@@ -19,8 +19,10 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     let input = read_file("example.txt");
 
     cmd.arg("10");
+    cmd.arg("0");
+    cmd.arg("20");
     let assert = cmd.write_stdin(input).assert();
-    assert.stdout("On row 10, there are 26 positions where a beacon can not be present.\n");
+    assert.stdout("On row 10, there are 26 positions where a beacon can not be present.\nThe distress frequency is 56000011.\n");
 
     Ok(())
 }
