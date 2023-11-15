@@ -11,18 +11,18 @@ struct PolymerBuilder {
 }
 
 impl PolymerBuilder {
-    fn new(initial_polymer: String) -> Self {
+    fn new(initial_polymer: &str) -> Self {
         Self {
-            polymer: initial_polymer,
+            polymer: initial_polymer.to_string(),
             rules: HashMap::new(),
         }
     }
 
-    fn add_rule(&mut self, from: &String, to: &String) {
+    fn add_rule(&mut self, from: &str, to: &str) {
         self.rules.insert(from.to_string(), to.to_string());
     }
 
-    fn get_polymer(&self) -> &String {
+    fn get_polymer(&self) -> &str {
         &self.polymer
     }
 
@@ -61,33 +61,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut lines = stdin.lock().lines();
 
     let initial_polymer = lines.next().unwrap()?;
-    let mut polymer_builder = PolymerBuilder::new(initial_polymer);
+    let mut polymer_builder = PolymerBuilder::new(&initial_polymer);
 
     for line in lines.flatten() {
         if line.contains(" -> ") {
             let (from, to) = line.split_once(" -> ").unwrap();
             polymer_builder.add_rule(
-                &from.to_string(), 
-                &to.to_string()
-                // &format!(
-                //     "{}{}{}",
-                //     from.chars().nth(0).unwrap(),
-                //     &to,
-                //     from.chars().nth(1).unwrap()
-                //),
+                from, 
+                to
             );
         }
     }
 
     // println!("{}", polymer_builder.get_polymer());
 
-    for i in 1..=10 {
+    for _ in 1..=10 {
         polymer_builder.step();
     }
 
     println!("After 10 steps, most common element minus least common element: {}", polymer_builder.calculate_most_least_common());
 
-    for i in 1..=30 {
+    for _ in 1..=30 {
         polymer_builder.step();
     }
 

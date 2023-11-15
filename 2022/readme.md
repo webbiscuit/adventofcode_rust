@@ -32,3 +32,7 @@ or
 The tests are from the example of the day
 
     cargo test
+
+### Needs more attention
+
+Day 15 - Part 2 is really slow, need to optimise finding the first gap in the range 

@@ -1,4 +1,4 @@
-# Day 11 Hill Climbing Algorithm
+# Day 12 Hill Climbing Algorithm
 
 ## Part 1
 
