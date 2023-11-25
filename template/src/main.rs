@@ -2,11 +2,28 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::Path;
 
-fn main() -> std::io::Result<()> {
-    let day = 1;
-    let template_path = "data/day_0x";
+use clap::Parser;
 
-    let out_dir = format!("out/day_{:02}", day);
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Output directory
+    #[arg(short, long, required = true)]
+    out_dir: String,
+
+    /// Day number
+    #[arg(short, long, required = true)]
+    day: u8,
+}
+
+fn main() -> std::io::Result<()> {
+    let args = Args::parse();
+
+    let day = args.day;
+    let out_folder = args.out_dir;
+
+    let template_path = "data/day_0x";
+    let out_dir = format!("{out_folder}/day_{:02}", day);
     let src_dir = "src";
     let test_dir = "tests";
 
