@@ -32,6 +32,10 @@ fn main() -> std::io::Result<()> {
     let src_dir = "src";
     let test_dir = "tests";
 
+    if fs::metadata(&out_dir).is_ok() {
+        panic!("Day already exists");
+    }
+
     fs::create_dir_all(&format!("{out_dir}/{src_dir}")).expect("Unable to create directories");
     fs::create_dir_all(&format!("{out_dir}/{test_dir}")).expect("Unable to create directories");
 
@@ -63,6 +67,9 @@ fn main() -> std::io::Result<()> {
         "readme.md",
         Some(&readme_day_replace_fn),
     );
+
+    println!("Created day {:02} in {}", day, out_dir);
+    println!("Good luck finding the solution!");
 
     Ok(())
 }
