@@ -1,5 +1,5 @@
 [package]
-name = "AdventOfCodeTemplateBuilder"
+name = "advent_of_code_template_builder"
 authors = ["Webbiscuit"]
 version = "0.1.0"
 edition = "2021"
