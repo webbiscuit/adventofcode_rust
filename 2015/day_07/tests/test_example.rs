@@ -15,7 +15,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
 
     cmd.write_stdin(contents)
         .assert()
-        .stdout("Signal on a is 123\n");
+        .stdout("Signal on a is 123\nSignal after retriggering a is 123\n");
 
     Ok(())
 }

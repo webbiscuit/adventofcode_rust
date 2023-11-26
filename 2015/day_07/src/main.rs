@@ -7,7 +7,7 @@ type Dest = Wire;
 type Source = Wire;
 type Wire = String;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Instruction {
     Assign(Dest, Operand),
     And(Dest, Operand, Operand),
@@ -17,7 +17,7 @@ enum Instruction {
     Not(Dest, Operand),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Operand {
     Value(u16),
     Wire(Source),
@@ -193,11 +193,7 @@ fn topological_sort(dependency_graph: &HashMap<Wire, HashSet<Wire>>) -> Result<V
     Ok(sorted_elements)
 }
 
-fn main() -> std::io::Result<()> {
-    let input = io::stdin().lines();
-
-    let instructions: Vec<Instruction> = input.map(|line| parse_line(&line.unwrap())).collect();
-
+fn sort_instructions(instructions: &[Instruction]) -> Result<Vec<&Instruction>, String> {
     let graph = build_dependency_graph(&instructions);
     let sorted_wires = topological_sort(&graph).unwrap();
     let mut sorted_instructions: Vec<&Instruction> = Vec::new();
@@ -210,6 +206,15 @@ fn main() -> std::io::Result<()> {
         sorted_instructions.push(instruction);
     }
 
+    Ok(sorted_instructions)
+}
+
+fn main() -> std::io::Result<()> {
+    let input = io::stdin().lines();
+
+    let instructions: Vec<Instruction> = input.map(|line| parse_line(&line.unwrap())).collect();
+    let sorted_instructions = sort_instructions(&instructions).unwrap();
+
     let wire_values = evaluate_instructions(&sorted_instructions);
 
     // for (wire, value) in wire_values {
@@ -218,6 +223,28 @@ fn main() -> std::io::Result<()> {
 
     let wire_a = wire_values.iter().find(|(wire, _)| wire == "a").unwrap().1;
     println!("Signal on a is {}", wire_a);
+
+    let new_instruction = Instruction::Assign("b".to_string(), Operand::Value(wire_a));
+    let new_instructions: Vec<Instruction> = instructions
+        .iter()
+        .map(|instruction| {
+            if instruction.dest() == "b" {
+                new_instruction.clone()
+            } else {
+                instruction.clone()
+            }
+        })
+        .collect();
+    let new_sorted_instructions = sort_instructions(&new_instructions).unwrap();
+    let new_wire_values = evaluate_instructions(&new_sorted_instructions);
+
+    let new_wire_a = new_wire_values
+        .iter()
+        .find(|(wire, _)| wire == "a")
+        .unwrap()
+        .1;
+
+    println!("Signal after retriggering a is {}", new_wire_a);
 
     Ok(())
 }
