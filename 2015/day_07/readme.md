@@ -1,4 +1,4 @@
-# Day X
+# Day 7
 
 ## Part 1
 
