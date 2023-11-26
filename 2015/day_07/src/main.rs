@@ -1,7 +1,11 @@
-use std::io;
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    io,
+};
 
-type Dest = String;
-type Source = String;
+type Dest = Wire;
+type Source = Wire;
+type Wire = String;
 
 #[derive(Debug)]
 enum Instruction {
@@ -48,15 +52,15 @@ fn parse_operand(operand: &str) -> Operand {
     }
 }
 
-fn evaluate_instructions(instructions: &[Instruction]) -> Vec<(String, u16)> {
+fn evaluate_instructions(instructions: &[&Instruction]) -> Vec<(Wire, u16)> {
     let mut wire_values: Vec<(String, u16)> = Vec::new();
 
-    fn lookup_wire_value(wire: &str, wire_values: &[(String, u16)]) -> u16 {
+    fn lookup_wire_value(wire: &str, wire_values: &[(Wire, u16)]) -> u16 {
         let value = wire_values.iter().find(|(w, _)| w == wire).unwrap().1;
         value
     }
 
-    fn handle_operand(operand: &Operand, wire_values: &[(String, u16)]) -> u16 {
+    fn handle_operand(operand: &Operand, wire_values: &[(Wire, u16)]) -> u16 {
         match operand {
             Operand::Value(value) => *value,
             Operand::Wire(wire) => lookup_wire_value(wire, wire_values),
@@ -97,12 +101,110 @@ fn evaluate_instructions(instructions: &[Instruction]) -> Vec<(String, u16)> {
     wire_values
 }
 
+fn build_dependency_graph(instructions: &[Instruction]) -> HashMap<Wire, HashSet<Wire>> {
+    let mut graph: HashMap<Wire, HashSet<Wire>> = HashMap::new();
+
+    for instruction in instructions {
+        match instruction {
+            Instruction::Assign(dest, operand) => {
+                add_dependency(&mut graph, operand, dest);
+            }
+            Instruction::And(dest, operand1, operand2)
+            | Instruction::Or(dest, operand1, operand2) => {
+                add_dependency(&mut graph, operand1, dest);
+                add_dependency(&mut graph, operand2, dest);
+            }
+            Instruction::LShift(dest, operand, _)
+            | Instruction::RShift(dest, operand, _)
+            | Instruction::Not(dest, operand) => {
+                add_dependency(&mut graph, operand, dest);
+            }
+        }
+    }
+
+    graph
+}
+
+fn add_dependency(graph: &mut HashMap<Wire, HashSet<Wire>>, operand: &Operand, dest: &str) {
+    if let Operand::Wire(source) = operand {
+        graph
+            .entry(source.to_string())
+            .or_default()
+            .insert(dest.to_string());
+    }
+}
+
+fn topological_sort(dependency_graph: &HashMap<Wire, HashSet<Wire>>) -> Result<Vec<Wire>, String> {
+    let mut in_degree = HashMap::new();
+    let mut zero_in_degree_queue = VecDeque::new();
+    let mut sorted_elements = Vec::new();
+
+    // Initialize in-degree of each node
+    for node in dependency_graph.keys() {
+        in_degree.insert(node.clone(), 0);
+    }
+
+    // Calculate in-degree
+    for deps in dependency_graph.values() {
+        for dep in deps {
+            *in_degree.entry(dep.clone()).or_insert(0) += 1;
+        }
+    }
+
+    // Find nodes with no incoming edges
+    for (node, &degree) in in_degree.iter() {
+        if degree == 0 {
+            zero_in_degree_queue.push_back(node.clone());
+        }
+    }
+
+    // Process nodes with zero in-degree and update dependent nodes
+    while let Some(node) = zero_in_degree_queue.pop_front() {
+        sorted_elements.push(node.clone());
+        if let Some(deps) = dependency_graph.get(&node) {
+            for dep in deps {
+                let degree = in_degree.entry(dep.clone()).or_default();
+                *degree -= 1;
+                if *degree == 0 {
+                    zero_in_degree_queue.push_back(dep.clone());
+                }
+            }
+        }
+    }
+
+    // Check for cycle
+    if sorted_elements.len() != in_degree.len() {
+        return Err("Cycle detected in the graph".to_string());
+    }
+
+    Ok(sorted_elements)
+}
+
 fn main() -> std::io::Result<()> {
     let input = io::stdin().lines();
 
     let instructions: Vec<Instruction> = input.map(|line| parse_line(&line.unwrap())).collect();
 
-    let wire_values = evaluate_instructions(&instructions);
+    let graph = build_dependency_graph(&instructions);
+    let sorted_wires = topological_sort(&graph).unwrap();
+    let mut sorted_instructions: Vec<&Instruction> = Vec::new();
+
+    for wire in sorted_wires {
+        let instruction = instructions
+            .iter()
+            .find(|&instruction| match instruction {
+                Instruction::Assign(dest, _) => dest == &wire,
+                Instruction::And(dest, _, _) => dest == &wire,
+                Instruction::Or(dest, _, _) => dest == &wire,
+                Instruction::LShift(dest, _, _) => dest == &wire,
+                Instruction::RShift(dest, _, _) => dest == &wire,
+                Instruction::Not(dest, _) => dest == &wire,
+            })
+            .unwrap();
+        sorted_instructions.push(instruction);
+    }
+
+    let wire_values = evaluate_instructions(&sorted_instructions);
 
     // for (wire, value) in wire_values {
     //     println!("{}: {}", wire, value);
