@@ -23,6 +23,31 @@ enum Operand {
     Wire(Source),
 }
 
+impl Instruction {
+    fn dest(&self) -> &Dest {
+        match self {
+            Instruction::Assign(dest, _)
+            | Instruction::And(dest, _, _)
+            | Instruction::Or(dest, _, _)
+            | Instruction::LShift(dest, _, _)
+            | Instruction::RShift(dest, _, _)
+            | Instruction::Not(dest, _) => dest,
+        }
+    }
+
+    fn operands(&self) -> Vec<&Operand> {
+        match self {
+            Instruction::Assign(_, operand1)
+            | Instruction::LShift(_, operand1, _)
+            | Instruction::RShift(_, operand1, _)
+            | Instruction::Not(_, operand1) => vec![operand1],
+            Instruction::And(_, operand1, operand2) | Instruction::Or(_, operand1, operand2) => {
+                vec![operand1, operand2]
+            }
+        }
+    }
+}
+
 fn parse_line(line: &str) -> Instruction {
     let parts: Vec<&str> = line.split_whitespace().collect();
     match parts[..] {
@@ -105,20 +130,8 @@ fn build_dependency_graph(instructions: &[Instruction]) -> HashMap<Wire, HashSet
     let mut graph: HashMap<Wire, HashSet<Wire>> = HashMap::new();
 
     for instruction in instructions {
-        match instruction {
-            Instruction::Assign(dest, operand) => {
-                add_dependency(&mut graph, operand, dest);
-            }
-            Instruction::And(dest, operand1, operand2)
-            | Instruction::Or(dest, operand1, operand2) => {
-                add_dependency(&mut graph, operand1, dest);
-                add_dependency(&mut graph, operand2, dest);
-            }
-            Instruction::LShift(dest, operand, _)
-            | Instruction::RShift(dest, operand, _)
-            | Instruction::Not(dest, operand) => {
-                add_dependency(&mut graph, operand, dest);
-            }
+        for operand in instruction.operands() {
+            add_dependency(&mut graph, operand, instruction.dest());
         }
     }
 
@@ -192,14 +205,7 @@ fn main() -> std::io::Result<()> {
     for wire in sorted_wires {
         let instruction = instructions
             .iter()
-            .find(|&instruction| match instruction {
-                Instruction::Assign(dest, _) => dest == &wire,
-                Instruction::And(dest, _, _) => dest == &wire,
-                Instruction::Or(dest, _, _) => dest == &wire,
-                Instruction::LShift(dest, _, _) => dest == &wire,
-                Instruction::RShift(dest, _, _) => dest == &wire,
-                Instruction::Not(dest, _) => dest == &wire,
-            })
+            .find(|&instruction| instruction.dest() == &wire)
             .unwrap();
         sorted_instructions.push(instruction);
     }
