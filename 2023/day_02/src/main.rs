@@ -1,6 +1,7 @@
 use std::{
     cmp,
     io::{self, prelude::*},
+    str::FromStr,
 };
 
 use regex::Regex;
@@ -25,48 +26,52 @@ struct Round {
 
 impl Round {
     pub fn get_colour_count(&self, colour: Cube) -> u32 {
-        let found = self.cube_count.iter().find(|c| c.0 == colour);
-
-        match found {
-            Some((_, count)) => *count,
-            None => 0,
-        }
+        self.cube_count
+            .iter()
+            .find_map(|c| if c.0 == colour { Some(c.1) } else { None })
+            .unwrap_or(0)
     }
 }
+#[derive(Debug, PartialEq, Eq)]
+struct ParseError;
 
-fn parse_game(line: &str) -> Game {
-    let game_split = line.split(": ").collect::<Vec<&str>>();
-    let game_regex = Regex::new(r"Game (\d+)").unwrap();
-    let game_number = game_regex.captures(game_split[0]).unwrap()[1]
-        .parse::<u32>()
-        .unwrap();
+impl FromStr for Game {
+    type Err = ParseError;
 
-    let round_split = game_split[1].split("; ").collect::<Vec<&str>>();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let game_split = s.split(": ").collect::<Vec<&str>>();
+        let game_regex = Regex::new(r"Game (\d+)").unwrap();
+        let game_number = game_regex.captures(game_split[0]).unwrap()[1]
+            .parse::<u32>()
+            .unwrap();
 
-    let mut rounds = Vec::new();
+        let round_split = game_split[1].split("; ").collect::<Vec<&str>>();
 
-    let cube_regex = Regex::new(r"(\d+) (blue|red|green)").unwrap();
+        let mut rounds = Vec::new();
 
-    for round in round_split {
-        let mut cube_count = Vec::new();
-        for cube_split in round.split(", ") {
-            let captures = cube_regex.captures(cube_split).unwrap();
+        let cube_regex = Regex::new(r"(\d+) (blue|red|green)").unwrap();
 
-            let colour = match &captures[2] {
-                "red" => Cube::Red,
-                "green" => Cube::Green,
-                "blue" => Cube::Blue,
-                _ => panic!("Invalid cube colour"),
-            };
-            let count = captures[1].parse::<u32>().unwrap();
-            cube_count.push((colour, count));
+        for round in round_split {
+            let mut cube_count = Vec::new();
+            for cube_split in round.split(", ") {
+                let captures = cube_regex.captures(cube_split).unwrap();
+
+                let colour = match &captures[2] {
+                    "red" => Cube::Red,
+                    "green" => Cube::Green,
+                    "blue" => Cube::Blue,
+                    _ => panic!("Invalid cube colour"),
+                };
+                let count = captures[1].parse::<u32>().unwrap();
+                cube_count.push((colour, count));
+            }
+            rounds.push(Round { cube_count });
         }
-        rounds.push(Round { cube_count });
-    }
 
-    Game {
-        game_number,
-        rounds,
+        Ok(Game {
+            game_number,
+            rounds,
+        })
     }
 }
 
@@ -116,7 +121,10 @@ fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
-    let games = lines.iter().map(|l| parse_game(l)).collect::<Vec<_>>();
+    let games = lines
+        .iter()
+        .map(|l| Game::from_str(l).unwrap())
+        .collect::<Vec<_>>();
     const MAX_RED: u32 = 12;
     const MAX_GREEN: u32 = 13;
     const MAX_BLUE: u32 = 14;
@@ -125,7 +133,7 @@ fn main() -> std::io::Result<()> {
 
     println!("Sum of possible games is {sum}.");
 
-    let fewest_cube_games = games.iter().map(|g| get_fewest_possible_cubes(g));
+    let fewest_cube_games = games.iter().map(get_fewest_possible_cubes);
 
     // println!("{:?}", fewest_cube_games.collect::<Vec<_>>());
 
@@ -140,8 +148,10 @@ fn main() -> std::io::Result<()> {
 mod tests {
     use super::*;
 
+    #[test]
     fn test_parse_game() {
-        let game = parse_game("Game 23: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
+        let game =
+            Game::from_str("Game 23: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
 
         assert_eq!(game.game_number, 23);
 
