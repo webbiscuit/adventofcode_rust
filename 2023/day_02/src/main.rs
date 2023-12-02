@@ -1,4 +1,7 @@
-use std::io::{self, prelude::*};
+use std::{
+    cmp,
+    io::{self, prelude::*},
+};
 
 use regex::Regex;
 
@@ -91,6 +94,24 @@ fn to_valid_games(games: &[Game], max_red: u32, max_green: u32, max_blue: u32) -
     valid_games
 }
 
+fn get_fewest_possible_cubes(game: &Game) -> (u32, u32, u32) {
+    let mut min_red = 0;
+    let mut min_green = 0;
+    let mut min_blue = 0;
+
+    for round in &game.rounds {
+        let red_count = round.get_colour_count(Cube::Red);
+        let green_count = round.get_colour_count(Cube::Green);
+        let blue_count = round.get_colour_count(Cube::Blue);
+
+        min_red = cmp::max(min_red, red_count);
+        min_green = cmp::max(min_green, green_count);
+        min_blue = cmp::max(min_blue, blue_count);
+    }
+
+    (min_red, min_green, min_blue)
+}
+
 fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
@@ -100,12 +121,17 @@ fn main() -> std::io::Result<()> {
     const MAX_GREEN: u32 = 13;
     const MAX_BLUE: u32 = 14;
     let valid_games = to_valid_games(&games, MAX_RED, MAX_GREEN, MAX_BLUE);
-
-    // println!("Valid games {:?}", valid_games);
-
     let sum = valid_games.iter().fold(0u32, |acc, g| acc + g.game_number);
 
     println!("Sum of possible games is {sum}.");
+
+    let fewest_cube_games = games.iter().map(|g| get_fewest_possible_cubes(g));
+
+    // println!("{:?}", fewest_cube_games.collect::<Vec<_>>());
+
+    let power = fewest_cube_games.fold(0u32, |acc, (r, g, b)| acc + r * g * b);
+
+    println!("Sum of the power set of minimum cubes is {power}.");
 
     Ok(())
 }

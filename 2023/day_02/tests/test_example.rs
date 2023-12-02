@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Sum of possible games is 8.\n");
+    assert.stdout("Sum of possible games is 8.\nSum of the power set of minimum cubes is 2286.\n");
 
     Ok(())
 }
