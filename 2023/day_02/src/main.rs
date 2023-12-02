@@ -22,7 +22,7 @@ struct Round {
 
 impl Round {
     pub fn get_colour_count(&self, colour: Cube) -> u32 {
-        let found = self.cube_count.iter().find(|c| c.0 == Cube::Green);
+        let found = self.cube_count.iter().find(|c| c.0 == colour);
 
         match found {
             Some((_, count)) => *count,
@@ -67,11 +67,45 @@ fn parse_game(line: &str) -> Game {
     }
 }
 
+fn to_valid_games(games: &[Game], max_red: u32, max_green: u32, max_blue: u32) -> Vec<&Game> {
+    let mut valid_games = Vec::new();
+
+    for game in games {
+        let mut valid_game = true;
+
+        for round in &game.rounds {
+            if round.get_colour_count(Cube::Red) > max_red
+                || round.get_colour_count(Cube::Green) > max_green
+                || round.get_colour_count(Cube::Blue) > max_blue
+            {
+                valid_game = false;
+                break;
+            }
+        }
+
+        if valid_game {
+            valid_games.push(game);
+        }
+    }
+
+    valid_games
+}
+
 fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
-    println!("Hello, world!");
+    let games = lines.iter().map(|l| parse_game(l)).collect::<Vec<_>>();
+    const MAX_RED: u32 = 12;
+    const MAX_GREEN: u32 = 13;
+    const MAX_BLUE: u32 = 14;
+    let valid_games = to_valid_games(&games, MAX_RED, MAX_GREEN, MAX_BLUE);
+
+    // println!("Valid games {:?}", valid_games);
+
+    let sum = valid_games.iter().fold(0u32, |acc, g| acc + g.game_number);
+
+    println!("Sum of possible games is {sum}.");
 
     Ok(())
 }

@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Hello, world!\n");
+    assert.stdout("Sum of possible games is 8.\n");
 
     Ok(())
 }
