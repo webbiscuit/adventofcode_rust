@@ -4,7 +4,15 @@ use std::{
     str::FromStr,
 };
 
-use regex::Regex;
+use nom::{
+    bytes::complete::tag,
+    character::complete::{alpha1, digit1, space1},
+    combinator::map,
+    combinator::map_res,
+    multi::separated_list1,
+    sequence::separated_pair,
+    IResult,
+};
 
 #[derive(Debug, PartialEq)]
 enum Cube {
@@ -32,48 +40,109 @@ impl Round {
             .unwrap_or(0)
     }
 }
-#[derive(Debug, PartialEq, Eq)]
-struct ParseError;
 
-impl FromStr for Game {
-    type Err = ParseError;
+#[derive(Debug)]
+struct ParseGameError {
+    // message: String,
+}
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let game_split = s.split(": ").collect::<Vec<&str>>();
-        let game_regex = Regex::new(r"Game (\d+)").unwrap();
-        let game_number = game_regex.captures(game_split[0]).unwrap()[1]
-            .parse::<u32>()
-            .unwrap();
-
-        let round_split = game_split[1].split("; ").collect::<Vec<&str>>();
-
-        let mut rounds = Vec::new();
-
-        let cube_regex = Regex::new(r"(\d+) (blue|red|green)").unwrap();
-
-        for round in round_split {
-            let mut cube_count = Vec::new();
-            for cube_split in round.split(", ") {
-                let captures = cube_regex.captures(cube_split).unwrap();
-
-                let colour = match &captures[2] {
-                    "red" => Cube::Red,
-                    "green" => Cube::Green,
-                    "blue" => Cube::Blue,
-                    _ => panic!("Invalid cube colour"),
-                };
-                let count = captures[1].parse::<u32>().unwrap();
-                cube_count.push((colour, count));
-            }
-            rounds.push(Round { cube_count });
+impl From<nom::Err<nom::error::Error<&str>>> for ParseGameError {
+    fn from(_err: nom::Err<nom::error::Error<&str>>) -> Self {
+        ParseGameError {
+            // message: format!("Parsing error: {:?}", err),
         }
-
-        Ok(Game {
-            game_number,
-            rounds,
-        })
     }
 }
+
+impl FromStr for Game {
+    type Err = ParseGameError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_game(s)
+            .map(|(_, game)| game)
+            .map_err(ParseGameError::from)
+    }
+}
+
+fn parse_number(input: &str) -> IResult<&str, u32> {
+    map_res(digit1, str::parse)(input)
+}
+
+fn parse_game(input: &str) -> IResult<&str, Game> {
+    let (input, _) = tag("Game ")(input)?;
+    let (input, game_number) = parse_number(input)?;
+    let (input, _) = tag(": ")(input)?;
+    let (input, rounds) = separated_list1(tag("; "), parse_round)(input)?;
+    Ok((
+        input,
+        Game {
+            game_number,
+            rounds,
+        },
+    ))
+}
+
+fn parse_round(input: &str) -> IResult<&str, Round> {
+    let (input, cube_count) = separated_list1(tag(", "), parse_cube_count)(input)?;
+    Ok((input, Round { cube_count }))
+}
+
+fn parse_cube_count(input: &str) -> IResult<&str, (Cube, u32)> {
+    let (input, (count, cube)) = separated_pair(parse_number, space1, parse_colour)(input)?;
+    Ok((input, (cube, count)))
+}
+
+fn parse_colour(input: &str) -> IResult<&str, Cube> {
+    map(alpha1, |colour: &str| match colour {
+        "red" => Cube::Red,
+        "green" => Cube::Green,
+        "blue" => Cube::Blue,
+        _ => panic!("Invalid cube colour"),
+    })(input)
+}
+
+// #[derive(Debug, PartialEq, Eq)]
+// struct ParseError;
+
+// impl FromStr for Game {
+//     type Err = ParseError;
+
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let game_split = s.split(": ").collect::<Vec<&str>>();
+//         let game_regex = Regex::new(r"Game (\d+)").unwrap();
+//         let game_number = game_regex.captures(game_split[0]).unwrap()[1]
+//             .parse::<u32>()
+//             .unwrap();
+
+//         let round_split = game_split[1].split("; ").collect::<Vec<&str>>();
+
+//         let mut rounds = Vec::new();
+
+//         let cube_regex = Regex::new(r"(\d+) (blue|red|green)").unwrap();
+
+//         for round in round_split {
+//             let mut cube_count = Vec::new();
+//             for cube_split in round.split(", ") {
+//                 let captures = cube_regex.captures(cube_split).unwrap();
+
+//                 let colour = match &captures[2] {
+//                     "red" => Cube::Red,
+//                     "green" => Cube::Green,
+//                     "blue" => Cube::Blue,
+//                     _ => panic!("Invalid cube colour"),
+//                 };
+//                 let count = captures[1].parse::<u32>().unwrap();
+//                 cube_count.push((colour, count));
+//             }
+//             rounds.push(Round { cube_count });
+//         }
+
+//         Ok(Game {
+//             game_number,
+//             rounds,
+//         })
+//     }
+// }
 
 fn to_valid_games(games: &[Game], max_red: u32, max_green: u32, max_blue: u32) -> Vec<&Game> {
     let mut valid_games = Vec::new();
