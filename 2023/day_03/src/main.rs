@@ -97,36 +97,30 @@ fn parse_lines(lines: &[String]) -> Schematic {
     Schematic { parts, symbols }
 }
 
+fn get_adjacent_positions(position: &Position) -> Vec<Position> {
+    let directions: [(i32, i32); 8] = [
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (-1, 0),
+        (-1, -1),
+        (-1, 1),
+        (1, -1),
+        (0, -1),
+    ];
+
+    directions
+        .iter()
+        .map(|&(dx, dy)| Position {
+            x: (position.x as i32 + dx) as u32,
+            y: (position.y as i32 + dy) as u32,
+        })
+        .collect()
+}
+
 fn find_valid_part_numbers(schematic: &Schematic) -> Vec<&Part> {
     // Find the areas around the symbols which are classed as adjacent zones
     let mut adjacent_areas: Vec<Position> = Vec::new();
-
-    fn get_adjacent_positions(position: &Position) -> Vec<Position> {
-        let directions: [(i32, i32); 9] = [
-            (1, 0),
-            (1, 1),
-            (0, 1),
-            (0, 0),
-            (-1, 0),
-            (-1, -1),
-            (-1, 1),
-            (1, -1),
-            (0, -1),
-        ];
-
-        let positions = directions
-            .iter()
-            .fold(Vec::<Position>::new(), |mut acc, d| {
-                acc.push(Position {
-                    x: (position.x as i32 + d.0) as u32,
-                    y: (position.y as i32 + d.1) as u32,
-                });
-
-                acc
-            });
-
-        positions
-    }
 
     for symbol in &schematic.symbols {
         let these_adjacent_areas = get_adjacent_positions(&symbol.position);
@@ -146,6 +140,35 @@ fn find_valid_part_numbers(schematic: &Schematic) -> Vec<&Part> {
     valid_parts
 }
 
+fn find_valid_gear_parts(schematic: &Schematic) -> Vec<(&Part, &Part)> {
+    // Find the areas around the symbols which are classed as adjacent zones
+
+    let gears = schematic.symbols.iter().filter(|s| s.symbol == '*');
+
+    let mut adjacent_part_pairs: Vec<(&Part, &Part)> = Vec::new();
+
+    gears.for_each(|gear: &Symbol| {
+        let adjacent_areas = get_adjacent_positions(&gear.position);
+
+        let mut adjacent_parts: Vec<&Part> = Vec::new();
+
+        for part in &schematic.parts {
+            if adjacent_areas
+                .iter()
+                .any(|&p| p == part.start_position || p == part.end_position)
+            {
+                adjacent_parts.push(part);
+            }
+        }
+
+        if adjacent_parts.len() == 2 {
+            adjacent_part_pairs.push((adjacent_parts[0], adjacent_parts[1]))
+        }
+    });
+
+    adjacent_part_pairs
+}
+
 fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
@@ -153,10 +176,17 @@ fn main() -> std::io::Result<()> {
 
     let valid_engine_parts = find_valid_part_numbers(&schematic);
 
-    // dbg!(valid_engine_parts);
     let sum = valid_engine_parts.iter().fold(0, |acc, &p| acc + p.number);
 
     println!("The sum of all parts in the engine schematic is {sum}");
+
+    let valid_gear_parts = find_valid_gear_parts(&schematic);
+
+    let ratio_sum = valid_gear_parts
+        .iter()
+        .fold(0, |acc, (p1, p2)| acc + p1.number * p2.number);
+
+    println!("Sum of all gear ratios produces {ratio_sum}");
 
     Ok(())
 }

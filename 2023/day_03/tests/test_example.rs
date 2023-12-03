@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The sum of all parts in the engine schematic is 4361\n");
+    assert.stdout("The sum of all parts in the engine schematic is 4361\nSum of all gear ratios produces 467835\n");
 
     Ok(())
 }
