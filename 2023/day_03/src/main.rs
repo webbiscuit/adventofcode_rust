@@ -76,7 +76,6 @@ fn parse_lines(lines: &[String]) -> Schematic {
                         },
                     })
                 }
-                _ => {}
             }
         }
 
@@ -120,12 +119,13 @@ fn get_adjacent_positions(position: &Position) -> Vec<Position> {
 
 fn find_valid_part_numbers(schematic: &Schematic) -> Vec<&Part> {
     // Find the areas around the symbols which are classed as adjacent zones
-    let mut adjacent_areas: Vec<Position> = Vec::new();
+    let adjacent_areas: Vec<Position> = schematic
+        .symbols
+        .iter()
+        .flat_map(|s| get_adjacent_positions(&s.position))
+        .collect();
 
-    for symbol in &schematic.symbols {
-        let these_adjacent_areas = get_adjacent_positions(&symbol.position);
-        adjacent_areas.extend(these_adjacent_areas);
-    }
+    // dbg!(&adjacent_areas);
 
     let valid_parts = schematic
         .parts
@@ -137,12 +137,12 @@ fn find_valid_part_numbers(schematic: &Schematic) -> Vec<&Part> {
         })
         .collect::<Vec<_>>();
 
+    // dbg!(&valid_parts);
+
     valid_parts
 }
 
 fn find_valid_gear_parts(schematic: &Schematic) -> Vec<(&Part, &Part)> {
-    // Find the areas around the symbols which are classed as adjacent zones
-
     let gears = schematic.symbols.iter().filter(|s| s.symbol == '*');
 
     let mut adjacent_part_pairs: Vec<(&Part, &Part)> = Vec::new();
