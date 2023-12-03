@@ -176,15 +176,16 @@ fn main() -> std::io::Result<()> {
 
     let valid_engine_parts = find_valid_part_numbers(&schematic);
 
-    let sum = valid_engine_parts.iter().fold(0, |acc, &p| acc + p.number);
+    let sum: u32 = valid_engine_parts.iter().map(|&p| p.number).sum();
 
     println!("The sum of all parts in the engine schematic is {sum}");
 
     let valid_gear_parts = find_valid_gear_parts(&schematic);
 
-    let ratio_sum = valid_gear_parts
+    let ratio_sum: u32 = valid_gear_parts
         .iter()
-        .fold(0, |acc, (p1, p2)| acc + p1.number * p2.number);
+        .map(|(p1, p2)| p1.number * p2.number)
+        .sum();
 
     println!("Sum of all gear ratios produces {ratio_sum}");
 
