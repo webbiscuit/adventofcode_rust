@@ -1,5 +1,4 @@
 use std::{
-    cmp::min,
     collections::{HashMap, HashSet},
     io::{self, prelude::*},
     str::FromStr,
@@ -46,6 +45,14 @@ impl Card {
 struct ParseCardError {
     message: String,
 }
+
+impl std::fmt::Display for ParseCardError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl std::error::Error for ParseCardError {}
 
 impl From<nom::Err<nom::error::Error<&str>>> for ParseCardError {
     fn from(err: nom::Err<nom::error::Error<&str>>) -> Self {
@@ -96,7 +103,6 @@ fn calculate_total_points(cards: &[Card]) -> u32 {
 
 fn count_all_cards(cards: &[Card]) -> u32 {
     let mut card_counts = HashMap::new();
-    let max = cards.len();
 
     for card in cards {
         *card_counts.entry(card.card_number).or_insert(0) += 1;
