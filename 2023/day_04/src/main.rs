@@ -34,20 +34,16 @@ impl Card {
 
     fn score_from_winners(winning_tickets: u32) -> u32 {
         // dbg!(winning_tickets);
-        let score = if winning_tickets > 0 {
+        if winning_tickets > 0 {
             2_u32.pow(winning_tickets - 1)
         } else {
             0
-        };
-        // dbg!(score);
-
-        score
+        }
     }
 }
 
 #[derive(Debug)]
 struct ParseCardError {
-    // message: format!("Parsing error: {:?}", err),
     message: String,
 }
 
@@ -103,30 +99,20 @@ fn count_all_cards(cards: &[Card]) -> u32 {
     let max = cards.len();
 
     for card in cards {
-        let mut card_count = 1;
-
-        if let Some(x) = card_counts.get_mut(&card.card_number) {
-            *x += 1;
-            card_count = *x;
-        } else {
-            card_counts.insert(card.card_number, 1);
-        }
+        *card_counts.entry(card.card_number).or_insert(0) += 1;
+        let card_count = card_counts[&card.card_number];
 
         let winners = card.count_winners();
 
         let start_dupes = card.card_number + 1;
-        let end_dupes = min(start_dupes + winners as u32, (max + 1) as u32);
+        let end_dupes = start_dupes + winners as u32;
 
         for ix in start_dupes..end_dupes {
-            if let Some(x) = card_counts.get_mut(&ix) {
-                *x += card_count;
-            } else {
-                card_counts.insert(ix, card_count);
-            }
+            *card_counts.entry(ix).or_insert(0) += card_count;
         }
     }
 
-    card_counts.iter().map(|x| x.1).sum()
+    card_counts.values().sum()
 }
 
 fn main() -> std::io::Result<()> {
