@@ -1,5 +1,6 @@
 use std::{
-    collections::HashSet,
+    cmp::min,
+    collections::{HashMap, HashSet},
     io::{self, prelude::*},
     str::FromStr,
 };
@@ -21,11 +22,14 @@ struct Card {
 
 impl Card {
     pub fn calculate_score(&self) -> u32 {
-        let winners = self
-            .winning_numbers
-            .intersection(&self.scratched_numbers)
-            .count();
+        let winners = self.count_winners();
         Card::score_from_winners(winners as u32)
+    }
+
+    pub fn count_winners(&self) -> usize {
+        self.winning_numbers
+            .intersection(&self.scratched_numbers)
+            .count()
     }
 
     fn score_from_winners(winning_tickets: u32) -> u32 {
@@ -94,6 +98,37 @@ fn calculate_total_points(cards: &[Card]) -> u32 {
     cards.iter().map(|c| c.calculate_score()).sum()
 }
 
+fn count_all_cards(cards: &[Card]) -> u32 {
+    let mut card_counts = HashMap::new();
+    let max = cards.len();
+
+    for card in cards {
+        let mut card_count = 1;
+
+        if let Some(x) = card_counts.get_mut(&card.card_number) {
+            *x += 1;
+            card_count = *x;
+        } else {
+            card_counts.insert(card.card_number, 1);
+        }
+
+        let winners = card.count_winners();
+
+        let start_dupes = card.card_number + 1;
+        let end_dupes = min(start_dupes + winners as u32, (max + 1) as u32);
+
+        for ix in start_dupes..end_dupes {
+            if let Some(x) = card_counts.get_mut(&ix) {
+                *x += card_count;
+            } else {
+                card_counts.insert(ix, card_count);
+            }
+        }
+    }
+
+    card_counts.iter().map(|x| x.1).sum()
+}
+
 fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
@@ -106,6 +141,10 @@ fn main() -> std::io::Result<()> {
     let points = calculate_total_points(&cards);
 
     println!("The scratch cards are worth {points} points.");
+
+    let card_count = count_all_cards(&cards);
+
+    println!("You end up with {card_count} scratchcards.");
 
     Ok(())
 }
