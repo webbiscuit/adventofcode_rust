@@ -97,14 +97,17 @@ fn count_record_beaters(race: &Race) -> u64 {
     // b = time
     // c = distance
 
+    let a = 1.0;
+    let b = -(race.time as f64);
     // We need to beat the record
-    let to_beat = race.record as f64 + 0.1;
-    let core = ((race.time as f64 * race.time as f64) - (4.0 * to_beat)).sqrt();
-    let max = (((race.time as f64) * 1.0) + core) / 2.0;
-    let min = (((race.time as f64) * 1.0) - core) / 2.0;
+    let c = race.record as f64 + 0.1;
+
+    let discriminant_sqrt = (b.powi(2) - (4.0 * a * c)).sqrt();
+
+    let max = (-b + discriminant_sqrt) / (2.0 * a);
+    let min = (-b - discriminant_sqrt) / (2.0 * a);
 
     let vals = (max.floor()) - (min.floor());
-    // let vals = max - min;
 
     // dbg!(&race);
     // dbg!(min);
