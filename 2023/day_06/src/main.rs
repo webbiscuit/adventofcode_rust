@@ -2,7 +2,7 @@ use std::io::{self, prelude::*};
 
 use nom::{
     bytes::complete::tag,
-    character::complete::{digit1, multispace1, newline, space1},
+    character::complete::{digit1, newline, space1},
     combinator::map_res,
     multi::separated_list1,
     IResult,
@@ -12,12 +12,6 @@ use nom::{
 struct Race {
     time: u64,
     record: u64,
-}
-
-impl Race {
-    fn new(time: u64, record: u64) -> Race {
-        Race { time, record }
-    }
 }
 
 #[derive(Debug)]
@@ -81,17 +75,19 @@ fn parse_races_v2(input: &str) -> IResult<&str, Race> {
     let (input, _) = newline(input)?;
     let (input, distances) = parse_distance_records(input)?;
 
-    let big_time = times
-        .iter()
-        .fold("".to_string(), |acc, f| acc + &f.to_string());
-    let big_distances = distances
-        .iter()
-        .fold("".to_string(), |acc, f| acc + &f.to_string());
+    let big_time = times.into_iter().map(|t| t.to_string()).collect::<String>();
+    let big_distance = distances
+        .into_iter()
+        .map(|t| t.to_string())
+        .collect::<String>();
 
-    let time = big_time.parse::<u64>().unwrap();
-    let record = big_distances.parse::<u64>().unwrap();
-
-    Ok((input, Race { time, record }))
+    Ok((
+        input,
+        Race {
+            time: big_time.parse::<u64>().unwrap(),
+            record: big_distance.parse::<u64>().unwrap(),
+        },
+    ))
 }
 
 fn count_record_beaters(race: &Race) -> u64 {
