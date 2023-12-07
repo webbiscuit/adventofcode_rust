@@ -1,7 +1,4 @@
-use std::{
-    io::{self, prelude::*},
-    str::FromStr,
-};
+use std::io::{self, prelude::*};
 
 use nom::{
     bytes::complete::tag,
@@ -13,12 +10,12 @@ use nom::{
 
 #[derive(Debug)]
 struct Race {
-    time: u32,
-    record: u32,
+    time: u64,
+    record: u64,
 }
 
 impl Race {
-    fn new(time: u32, record: u32) -> Race {
+    fn new(time: u64, record: u64) -> Race {
         Race { time, record }
     }
 }
@@ -44,11 +41,11 @@ impl From<nom::Err<nom::error::Error<&str>>> for ParseRaceError {
     }
 }
 
-fn parse_number(input: &str) -> IResult<&str, u32> {
+fn parse_number(input: &str) -> IResult<&str, u64> {
     map_res(digit1, str::parse)(input)
 }
 
-fn parse_times(input: &str) -> IResult<&str, Vec<u32>> {
+fn parse_times(input: &str) -> IResult<&str, Vec<u64>> {
     let (input, _) = tag("Time:")(input)?;
     let (input, _) = space1(input)?;
     let (input, times) = separated_list1(space1, parse_number)(input)?;
@@ -56,7 +53,7 @@ fn parse_times(input: &str) -> IResult<&str, Vec<u32>> {
     Ok((input, times))
 }
 
-fn parse_distance_records(input: &str) -> IResult<&str, Vec<u32>> {
+fn parse_distance_records(input: &str) -> IResult<&str, Vec<u64>> {
     let (input, _) = tag("Distance:")(input)?;
     let (input, _) = space1(input)?;
     let (input, distances) = separated_list1(space1, parse_number)(input)?;
@@ -79,7 +76,25 @@ fn parse_races(input: &str) -> IResult<&str, Vec<Race>> {
     ))
 }
 
-fn count_record_beaters(race: &Race) -> u32 {
+fn parse_races_v2(input: &str) -> IResult<&str, Race> {
+    let (input, times) = parse_times(input)?;
+    let (input, _) = newline(input)?;
+    let (input, distances) = parse_distance_records(input)?;
+
+    let big_time = times
+        .iter()
+        .fold("".to_string(), |acc, f| acc + &f.to_string());
+    let big_distances = distances
+        .iter()
+        .fold("".to_string(), |acc, f| acc + &f.to_string());
+
+    let time = big_time.parse::<u64>().unwrap();
+    let record = big_distances.parse::<u64>().unwrap();
+
+    Ok((input, Race { time, record }))
+}
+
+fn count_record_beaters(race: &Race) -> u64 {
     // `n^2 - xn + r = 0`
     // -b +/- rt(b^2-4ac) / 2a
     // a = 1
@@ -87,19 +102,20 @@ fn count_record_beaters(race: &Race) -> u32 {
     // c = distance
 
     // We need to beat the record
-    let to_beat = race.record as f32 + 0.1;
-    let core = ((race.time as f32 * race.time as f32) - (4.0 * to_beat)).sqrt();
-    let max = (((race.time as f32) * 1.0) + core) / 2.0;
-    let min = (((race.time as f32) * 1.0) - core) / 2.0;
+    let to_beat = race.record as f64 + 0.1;
+    let core = ((race.time as f64 * race.time as f64) - (4.0 * to_beat)).sqrt();
+    let max = (((race.time as f64) * 1.0) + core) / 2.0;
+    let min = (((race.time as f64) * 1.0) - core) / 2.0;
 
     let vals = (max.floor()) - (min.floor());
     // let vals = max - min;
 
+    // dbg!(&race);
     // dbg!(min);
     // dbg!(max);
     // dbg!(vals);
 
-    vals as u32
+    vals as u64
 }
 
 fn main() -> std::io::Result<()> {
@@ -109,14 +125,15 @@ fn main() -> std::io::Result<()> {
 
     let (_, races) = parse_races(&buf).unwrap();
 
-    // dbg!(&races);
-
-    // count_record_beaters(&races[0]);
-    // count_record_beaters(&races[1]);
-
-    let record_product: u32 = races.iter().map(count_record_beaters).product();
+    let record_product: u64 = races.iter().map(count_record_beaters).product();
 
     println!("Multiplying the ways of winning together makes {record_product}.");
+
+    let (_, race) = parse_races_v2(&buf).unwrap();
+
+    let record2 = count_record_beaters(&race);
+
+    println!("The ways of winning with improved kerning makes {record2}.");
 
     Ok(())
 }

@@ -18,3 +18,5 @@ For the first example this is
 Erm so at this point I look up how to quadratic equations...
 
 ## Part 2
+
+Pretty much the same but with a bigger number. Switched to 64bit versions of ints and floats.

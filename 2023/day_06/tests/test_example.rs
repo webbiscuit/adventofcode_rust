@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Multiplying the ways of winning together makes 288.\n");
+    assert.stdout("Multiplying the ways of winning together makes 288.\nThe ways of winning with improved kerning makes 71503.\n");
 
     Ok(())
 }
