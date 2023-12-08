@@ -1,7 +1,6 @@
 use std::{
     collections::HashMap,
     io::{self, prelude::*},
-    sync::RwLockWriteGuard,
 };
 
 use nom::{

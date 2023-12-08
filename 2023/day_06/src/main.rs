@@ -14,27 +14,6 @@ struct Race {
     record: u64,
 }
 
-#[derive(Debug)]
-struct ParseRaceError {
-    message: String,
-}
-
-impl std::fmt::Display for ParseRaceError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl std::error::Error for ParseRaceError {}
-
-impl From<nom::Err<nom::error::Error<&str>>> for ParseRaceError {
-    fn from(err: nom::Err<nom::error::Error<&str>>) -> Self {
-        ParseRaceError {
-            message: format!("Parsing error: {:?}", err),
-        }
-    }
-}
-
 fn parse_number(input: &str) -> IResult<&str, u64> {
     map_res(digit1, str::parse)(input)
 }
