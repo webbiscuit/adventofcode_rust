@@ -34,7 +34,7 @@ fn parse_image(lines: &[String]) -> Image {
     }
 }
 
-fn find_all_shortest_paths(image: &Image) -> Vec<usize> {
+fn find_all_shortest_paths(image: &Image, expansion_multiplier: usize) -> Vec<usize> {
     let mut y_expansions = Vec::new();
 
     for y in 0..=image.height {
@@ -70,13 +70,13 @@ fn find_all_shortest_paths(image: &Image) -> Vec<usize> {
 
             for x in first_x..=other_x {
                 if x_expansions.contains(&x) {
-                    distance_x += 1;
+                    distance_x += expansion_multiplier - 1;
                 }
             }
 
             for y in first_y..=other_y {
                 if y_expansions.contains(&y) {
-                    distance_y += 1;
+                    distance_y += expansion_multiplier - 1;
                 }
             }
 
@@ -95,13 +95,18 @@ fn main() -> std::io::Result<()> {
 
     // dbg!(&image);
 
-    let shortest_paths = find_all_shortest_paths(&image);
+    let shortest_paths = find_all_shortest_paths(&image, 2);
     let sum: usize = shortest_paths.iter().sum();
 
     // dbg!(&shortest_paths);
     // dbg!(&shortest_paths.len());
 
     println!("The shortest path between all pairs of galaxies is {sum}.");
+
+    let shortest_paths = find_all_shortest_paths(&image, 1000000);
+    let sum: usize = shortest_paths.iter().sum();
+
+    println!("The shortest path between all pairs of older galaxies is {sum}.");
 
     Ok(())
 }

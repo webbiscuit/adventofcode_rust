@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The shortest path between all pairs of galaxies is 374.\n");
+    assert.stdout("The shortest path between all pairs of galaxies is 374.\nThe shortest path between all pairs of older galaxies is 82000210.");
 
     Ok(())
 }
