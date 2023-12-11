@@ -1,6 +1,6 @@
 use std::{
+    collections::HashSet,
     io::{self, prelude::*},
-    sync::PoisonError,
 };
 
 #[derive(Debug)]
@@ -35,25 +35,13 @@ fn parse_image(lines: &[String]) -> Image {
 }
 
 fn find_all_shortest_paths(image: &Image, expansion_multiplier: usize) -> Vec<usize> {
-    let mut y_expansions = Vec::new();
+    let y_expansions: HashSet<_> = (0..=image.height)
+        .filter(|&y| !image.galaxies.iter().any(|point| point.y == y))
+        .collect();
 
-    for y in 0..=image.height {
-        if image.galaxies.iter().any(|point| point.y == y) {
-            continue;
-        }
-
-        y_expansions.push(y);
-    }
-
-    let mut x_expansions = Vec::new();
-
-    for x in 0..=image.width {
-        if image.galaxies.iter().any(|point| point.x == x) {
-            continue;
-        }
-
-        x_expansions.push(x);
-    }
+    let x_expansions: HashSet<_> = (0..=image.width)
+        .filter(|&x| !image.galaxies.iter().any(|point| point.x == x))
+        .collect();
 
     let mut distances = Vec::new();
 
@@ -103,7 +91,7 @@ fn main() -> std::io::Result<()> {
 
     println!("The shortest path between all pairs of galaxies is {sum}.");
 
-    let shortest_paths = find_all_shortest_paths(&image, 1000000);
+    let shortest_paths = find_all_shortest_paths(&image, 1_000_000);
     let sum: usize = shortest_paths.iter().sum();
 
     println!("The shortest path between all pairs of older galaxies is {sum}.");
