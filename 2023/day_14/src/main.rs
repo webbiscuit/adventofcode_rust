@@ -1,4 +1,6 @@
-use std::collections::{HashMap, HashSet};
+#![allow(clippy::needless_range_loop)]
+
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::{
     collections::hash_map::DefaultHasher,
@@ -32,6 +34,7 @@ enum Direction {
 impl Map {
     const SIZE: usize = 100;
 
+    #[allow(dead_code)]
     fn draw(&self) {
         for h in 0..self.height {
             for w in 0..self.width {
@@ -41,12 +44,11 @@ impl Map {
                     Tile::Floor => '.',
                     Tile::CubeRock => '#',
                     Tile::RoundRock => 'O',
-                    _ => '.',
                 };
 
                 print!("{}", c);
             }
-            println!("");
+            println!();
         }
     }
 
@@ -68,14 +70,11 @@ impl Map {
 
     fn to_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
-        for tile in &self.tiles {
-            tile.hash(&mut hasher);
-        }
+        self.tiles.hash(&mut hasher);
         hasher.finish()
     }
 
     fn tilt(&mut self, direction: Direction) {
-        let original_map = self.clone();
         let mut bitmaps: Vec<Bitmap<{ Self::SIZE }>> = vec![Bitmap::new(); self.height];
 
         for h in 0..self.height {
@@ -112,7 +111,7 @@ impl Map {
         }
     }
 
-    fn tilt_north(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+    fn tilt_north(&self, bitmaps: &mut [Bitmap<{ Self::SIZE }>]) {
         for w in 0..self.width {
             let mut next_free_space = 0;
 
@@ -129,7 +128,7 @@ impl Map {
             }
         }
     }
-    fn tilt_south(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+    fn tilt_south(&self, bitmaps: &mut [Bitmap<{ Self::SIZE }>]) {
         for w in 0..self.width {
             let mut next_free_space = self.height;
 
@@ -146,7 +145,7 @@ impl Map {
             }
         }
     }
-    fn tilt_east(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+    fn tilt_east(&self, bitmaps: &mut [Bitmap<{ Self::SIZE }>]) {
         for h in 0..self.height {
             let mut next_free_space = self.width;
 
@@ -163,7 +162,7 @@ impl Map {
             }
         }
     }
-    fn tilt_west(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+    fn tilt_west(&self, bitmaps: &mut [Bitmap<{ Self::SIZE }>]) {
         for h in 0..self.height {
             let mut next_free_space = 0;
 
@@ -224,22 +223,13 @@ fn main() -> std::io::Result<()> {
 
     let mut count = 0;
     let mut seen_states: HashMap<u64, usize> = HashMap::new();
-    let mut cycle_detected = false;
-    let mut cycle_length = 0;
-    let mut cycle_start = 0;
     const MAX_COUNT: usize = 1000000000;
 
     while count < MAX_COUNT {
         let state_hash = map.to_hash();
         if let Some(&first_seen) = seen_states.get(&state_hash) {
             // Cycle detected
-            if !cycle_detected {
-                cycle_detected = true;
-                cycle_length = count - first_seen;
-                cycle_start = first_seen;
-                // println!("Cycle detected: Start = {cycle_start}, Length = {cycle_length}");
-            }
-
+            let cycle_length = count - first_seen;
             let remaining_cycles = (MAX_COUNT - count) / cycle_length;
             count += remaining_cycles * cycle_length;
             break;
