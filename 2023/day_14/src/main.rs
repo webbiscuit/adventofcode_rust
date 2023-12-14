@@ -1,21 +1,37 @@
-use std::io::{self, prelude::*};
+use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
+use std::{
+    collections::hash_map::DefaultHasher,
+    io::{self, prelude::*},
+};
 
 use bitmaps::Bitmap;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Hash)]
 enum Tile {
     RoundRock,
     CubeRock,
     Floor,
 }
 
+#[derive(Debug, Clone)]
 struct Map {
     width: usize,
     height: usize,
     tiles: Vec<Tile>,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum Direction {
+    North,
+    East,
+    South,
+    West,
+}
+
 impl Map {
+    const SIZE: usize = 100;
+
     fn draw(&self) {
         for h in 0..self.height {
             for w in 0..self.width {
@@ -41,6 +57,8 @@ impl Map {
                 let tile = &self.tiles[w + (h * self.width)];
 
                 if tile == &Tile::RoundRock {
+                    // let score = self.height - h;
+                    // dbg!(score);
                     sum += self.height - h
                 }
             }
@@ -48,10 +66,17 @@ impl Map {
         sum
     }
 
-    fn tilt_north(&mut self) {
-        const SIZE: usize = 100;
+    fn to_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        for tile in &self.tiles {
+            tile.hash(&mut hasher);
+        }
+        hasher.finish()
+    }
 
-        let mut bitmaps: Vec<Bitmap<SIZE>> = vec![Bitmap::new(); self.height];
+    fn tilt(&mut self, direction: Direction) {
+        let original_map = self.clone();
+        let mut bitmaps: Vec<Bitmap<{ Self::SIZE }>> = vec![Bitmap::new(); self.height];
 
         for h in 0..self.height {
             for w in 0..self.width {
@@ -63,20 +88,11 @@ impl Map {
             }
         }
 
-        for w in 0..self.width {
-            let mut next_free_space = 0;
-
-            for h in 0..self.height {
-                let tile = &self.tiles[w + (h * self.width)];
-
-                if tile == &Tile::CubeRock {
-                    next_free_space = h + 1;
-                } else if tile == &Tile::RoundRock {
-                    bitmaps[h].set(w, false);
-                    bitmaps[next_free_space].set(w, true);
-                    next_free_space += 1;
-                }
-            }
+        match direction {
+            Direction::North => self.tilt_north(&mut bitmaps),
+            Direction::South => self.tilt_south(&mut bitmaps),
+            Direction::East => self.tilt_east(&mut bitmaps),
+            Direction::West => self.tilt_west(&mut bitmaps),
         }
 
         for h in 0..self.height {
@@ -94,8 +110,75 @@ impl Map {
                 }
             }
         }
+    }
 
-        // dbg!(&bitmaps);
+    fn tilt_north(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+        for w in 0..self.width {
+            let mut next_free_space = 0;
+
+            for h in 0..self.height {
+                let tile = &self.tiles[w + (h * self.width)];
+
+                if tile == &Tile::CubeRock {
+                    next_free_space = h + 1;
+                } else if tile == &Tile::RoundRock {
+                    bitmaps[h].set(w, false);
+                    bitmaps[next_free_space].set(w, true);
+                    next_free_space += 1;
+                }
+            }
+        }
+    }
+    fn tilt_south(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+        for w in 0..self.width {
+            let mut next_free_space = self.height;
+
+            for h in (0..self.height).rev() {
+                let tile = &self.tiles[w + (h * self.width)];
+
+                if tile == &Tile::CubeRock {
+                    next_free_space = h;
+                } else if tile == &Tile::RoundRock {
+                    next_free_space -= 1;
+                    bitmaps[h].set(w, false);
+                    bitmaps[next_free_space].set(w, true);
+                }
+            }
+        }
+    }
+    fn tilt_east(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+        for h in 0..self.height {
+            let mut next_free_space = self.width;
+
+            for w in (0..self.width).rev() {
+                let tile = &self.tiles[w + (h * self.width)];
+
+                if tile == &Tile::CubeRock {
+                    next_free_space = w;
+                } else if tile == &Tile::RoundRock {
+                    next_free_space -= 1;
+                    bitmaps[h].set(w, false);
+                    bitmaps[h].set(next_free_space, true);
+                }
+            }
+        }
+    }
+    fn tilt_west(&self, bitmaps: &mut Vec<Bitmap<{ Self::SIZE }>>) {
+        for h in 0..self.height {
+            let mut next_free_space = 0;
+
+            for w in 0..self.width {
+                let tile = &self.tiles[w + (h * self.width)];
+
+                if tile == &Tile::CubeRock {
+                    next_free_space = w + 1;
+                } else if tile == &Tile::RoundRock {
+                    bitmaps[h].set(w, false);
+                    bitmaps[h].set(next_free_space, true);
+                    next_free_space += 1;
+                }
+            }
+        }
     }
 }
 
@@ -127,13 +210,62 @@ fn main() -> std::io::Result<()> {
 
     let mut map = parse_lines(&lines);
 
-    // map.draw();
-    map.tilt_north();
+    map.tilt(Direction::North);
+    let load = map.calculate_load();
+
+    println!("The total load after tilting north is {load}.");
+
+    let directions = [
+        Direction::North,
+        Direction::West,
+        Direction::South,
+        Direction::East,
+    ];
+
+    let mut count = 0;
+    let mut seen_states: HashMap<u64, usize> = HashMap::new();
+    let mut cycle_detected = false;
+    let mut cycle_length = 0;
+    let mut cycle_start = 0;
+    const MAX_COUNT: usize = 1000000000;
+
+    while count < MAX_COUNT {
+        let state_hash = map.to_hash();
+        if let Some(&first_seen) = seen_states.get(&state_hash) {
+            // Cycle detected
+            if !cycle_detected {
+                cycle_detected = true;
+                cycle_length = count - first_seen;
+                cycle_start = first_seen;
+                // println!("Cycle detected: Start = {cycle_start}, Length = {cycle_length}");
+            }
+
+            let remaining_cycles = (MAX_COUNT - count) / cycle_length;
+            count += remaining_cycles * cycle_length;
+            break;
+        } else {
+            seen_states.insert(state_hash, count);
+        }
+
+        for &direction in &directions {
+            map.tilt(direction);
+        }
+
+        count += 1;
+    }
+
+    let remaining_iterations = MAX_COUNT - count;
+    for _ in 0..remaining_iterations {
+        for &direction in &directions {
+            map.tilt(direction);
+        }
+    }
+
     // map.draw();
 
     let load = map.calculate_load();
 
-    println!("The total load after tilting north is {load}.");
+    println!("The total load after tilting a lot is {load}.");
 
     Ok(())
 }

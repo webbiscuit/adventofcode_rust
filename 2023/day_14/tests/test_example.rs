@@ -14,7 +14,9 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The total load after tilting north is 136.\n");
+    assert.stdout(
+        "The total load after tilting north is 136.\nThe total load after tilting a lot is 64.\n",
+    );
 
     Ok(())
 }
