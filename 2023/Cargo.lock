@@ -122,6 +122,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "day_10"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "nom",
+]
+
+[[package]]
+name = "day_11"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+]
+
+[[package]]
+name = "day_14"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "bitmaps",
+]
+
+[[package]]
 name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

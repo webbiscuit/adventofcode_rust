@@ -1,3 +1,4 @@
+use ranges::{GenericRange, Ranges};
 use std::{
     io::{self, prelude::*},
     str::FromStr,
@@ -127,20 +128,20 @@ fn parse_almanac(input: &str) -> IResult<&str, Almanac> {
     ))
 }
 
-// fn parse_almanac(input: &str) -> IResult<&str, Almanac> {
-//     let (input, _) = tag("seeds: ")(input)?;
-//     let (input, seeds) = separated_list1(space1, parse_number)(input)?;
-//     let (input, _) = pair(newline, newline)(input)?;
-//     let (input, mappings) = separated_list1(pair(newline, newline), parse_mapping)(input)?;
+fn parse_almanac_as_seed_ranges(input: &str) -> IResult<&str, Almanac> {
+    let (input, _) = tag("seeds: ")(input)?;
+    let (input, seeds) = separated_list1(space1, parse_number)(input)?;
+    let (input, _) = pair(newline, newline)(input)?;
+    let (input, mappings) = separated_list1(pair(newline, newline), parse_mapping)(input)?;
 
-//     Ok((
-//         input,
-//         Almanac {
-//             seeds: seeds.iter().map(|&s| Seed(s)).collect(),
-//             mappings,
-//         },
-//     ))
-// }
+    Ok((
+        input,
+        Almanac {
+            seeds: seeds.iter().map(|&s| Seed(s)).collect(),
+            mappings,
+        },
+    ))
+}
 
 fn parse_mapping(input: &str) -> IResult<&str, Mapping> {
     let (input, source) = alpha1(input)?;
@@ -186,10 +187,32 @@ fn main() -> std::io::Result<()> {
 
     dbg!(&almanac);
 
-    // for i in 0..=99 {
-    //     let i2 = almanac.mappings[0].lookup(i);
-    //     println!("{i} {i2}");
-    // }
+    for i in 0..=100 {
+        print!("{i}");
+        let mut chained_val = i;
+
+        for mapping in &almanac.mappings {
+            let i2 = mapping.lookup(chained_val);
+            chained_val = i2;
+            print! {" {i2}"};
+        }
+
+        println!("");
+
+        // let i2 = almanac.mappings[0].lookup(i);
+        // println!("{i} {i2}");
+    }
+
+    let mut ranges = Vec::new();
+
+    for mapping in &almanac.mappings {
+        // ranges.push((mapping.ran)
+        for range in &mapping.ranges {
+            ranges.push((range.source_start, range.source_start + range.length));
+        }
+    }
+
+    // dbg!(&ranges);
 
     let locations = almanac.follow_lookups("seed", "location");
 

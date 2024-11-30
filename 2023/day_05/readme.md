@@ -6,4 +6,4 @@ Looks fiddly rather than hard. Started with the parsing, and I'm enjoying nom a 
 
 ## Part 2
 
-Aha interesting, this is changing the parsing rather than the calculation. Nice twist!
+Aha interesting, this is changing the parsing and then finding massive inefficiencies in the coding! Now I see they they were u64s. 
