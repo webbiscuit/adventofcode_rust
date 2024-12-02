@@ -58,74 +58,11 @@ fn is_valid_report(report: &Report) -> bool {
 
     let comp_fn = find_comparison_func(&first_window);
 
-    iter
-        // .inspect(|f| print!("{:?}", f))
-        .all(|w| comp_fn(&w[0], &w[1]))
+    iter.all(|w| comp_fn(&w[0], &w[1]))
 }
 
 fn count_safe_reports(reports: &[Report]) -> usize {
     reports.iter().filter(|r| is_valid_report(r)).count()
-}
-
-fn _is_valid_report_with_damper(report: &Report, can_damp: bool) -> bool {
-    let levels = &report.0;
-
-    if levels.len() < 3 {
-        return false;
-    }
-
-    let mut iter = levels.windows(2);
-
-    let first_window = iter.next().unwrap();
-
-    let comp_fn = find_comparison_func(&first_window);
-
-    // println!("New inspection");
-
-    // It's a latch
-    let mut consumed_damper = !can_damp;
-    let mut damping = false;
-    let mut last_good: Option<(Level, Level)> = Some((first_window[0], first_window[1]));
-
-    iter
-        // .inspect(|w| println!("Current : {:?}, ", w))
-        .all(|w| {
-            if damping {
-                damping = false;
-                // println!("DAMP {:?} {:?}, ", &last_good.unwrap(), &w[1]);
-                return comp_fn(&last_good.unwrap().0, &w[0])
-                    || comp_fn(&last_good.unwrap().1, &w[1]);
-            }
-
-            if comp_fn(&w[0], &w[1]) {
-                // println!("Checks out");
-                last_good = Some((w[0], w[1]));
-
-                return true;
-            }
-
-            if consumed_damper {
-                // println!("No damper");
-
-                return false;
-            }
-
-            consumed_damper = true;
-            damping = true;
-
-            // println!("Damping");
-
-            true
-
-            // >639, <676
-            // !705
-            // !654
-            // !665
-            // !632
-            // !641
-            // !645
-            // !647
-        })
 }
 
 fn find_comparison_func(first_window: &[Level]) -> fn(&Level, &Level) -> bool {
@@ -141,23 +78,26 @@ fn find_comparison_func(first_window: &[Level]) -> fn(&Level, &Level) -> bool {
 }
 
 fn is_valid_report_with_damper(report: &Report) -> bool {
-    // Generate all the combos
-    // Find any that work
-
-
-    _is_valid_report_with_damper(report, true)
-        || _is_valid_report_with_damper(&Report(report.0.iter().skip(1).cloned().collect()), false)
-        || _is_valid_report_with_damper(
-            &Report(
+    // Generate all reports with 1 missing element
+    let all_report_combos: Vec<Report> = report
+        .0
+        .iter()
+        .enumerate()
+        .map(|(ix, _)| {
+            Report(
                 report
                     .0
                     .iter()
                     .enumerate()
-                    .filter_map(|(i, &x)| if i != 1 { Some(x) } else { None })
+                    .filter(|(j, _)| *j != ix)
+                    .map(|(_, l)| *l)
                     .collect(),
-            ),
-            false,
-        )
+            )
+        })
+        .collect();
+
+    // Check if any of these reports is valid
+    all_report_combos.iter().any(|r| is_valid_report(r))
 }
 
 fn count_safe_damper_reports(reports: &[Report]) -> usize {
