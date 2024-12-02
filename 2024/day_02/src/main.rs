@@ -27,10 +27,10 @@ fn is_valid_ascending(l1: &Level, l2: &Level) -> bool {
 
     if l2 > l1 {
         let diff = l2 - l1;
-        return diff >= 1 && diff <= 3;
+        return (1..=3).contains(&diff);
     }
 
-    return false;
+    false
 }
 
 fn is_valid_descending(l1: &Level, l2: &Level) -> bool {
@@ -39,10 +39,10 @@ fn is_valid_descending(l1: &Level, l2: &Level) -> bool {
 
     if l2 < l1 {
         let diff = l1 - l2;
-        return diff >= 1 && diff <= 3;
+        return (1..=3).contains(&diff);
     }
 
-    return false;
+    false
 }
 
 fn is_valid_report(report: &Report) -> bool {
@@ -56,7 +56,7 @@ fn is_valid_report(report: &Report) -> bool {
 
     let first_window = iter.next().unwrap();
 
-    let comp_fn = find_comparison_func(&first_window);
+    let comp_fn = find_comparison_func(first_window);
 
     iter.all(|w| comp_fn(&w[0], &w[1]))
 }
@@ -97,7 +97,7 @@ fn is_valid_report_with_damper(report: &Report) -> bool {
         .collect();
 
     // Check if any of these reports is valid
-    all_report_combos.iter().any(|r| is_valid_report(r))
+    all_report_combos.iter().any(is_valid_report)
 }
 
 fn count_safe_damper_reports(reports: &[Report]) -> usize {
