@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("There are 2 safe reports\n");
+    assert.stdout("There are 2 safe reports\nThere are 4 safe reports using the Problem Damper\n");
 
     Ok(())
 }
