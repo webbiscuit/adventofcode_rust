@@ -8,13 +8,13 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("day_03")?;
 
     let mut file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    file_path.push("example.txt");
+    file_path.push("example2.txt");
     let mut file = File::open(file_path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Adding up the multiplications gives 161\n");
+    assert.stdout("Adding up the multiplications gives 161\nAdding up the conditional multiplications gives 48\n");
 
     Ok(())
 }

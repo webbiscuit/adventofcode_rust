@@ -10,7 +10,7 @@ fn parse_for_mul(input: &[String]) -> Muls {
     let muls = input
         .iter()
         .flat_map(|line| {
-            re.captures_iter(line).map(|mul| {
+            re.captures_iter(&line).map(|mul| {
                 let num1 = mul[1].parse::<isize>().unwrap();
                 let num2 = mul[2].parse::<isize>().unwrap();
 
@@ -27,44 +27,43 @@ fn parse_for_mul(input: &[String]) -> Muls {
 fn parse_for_mul_do_dont(input: &[String]) -> Muls {
     let re = Regex::new(r"mul\((\d+),(\d+)\)|do\(\)|don't\(\)").expect("Invalid regex");
 
-    // Need to seperate so we can grab the external enabled flag -
-    // some issues capturing in a filter_map in a flat_map because rust doesn't know how things will unravel
-    let captures = input.iter().flat_map(|line| {
-        return re.captures_iter(line);
-    });
-
     let mut enabled = true;
 
-    let muls = captures
-        .filter_map(|mul| {
-            // println!("{:?}", mul[0].to_string());
+    let muls = input
+        .iter()
+        .flat_map(|line| {
+            re.captures_iter(&line).filter_map(move |mul| {
+                println!("{:?}", mul[0].to_string());
 
-            if mul[0].starts_with("do()") {
-                enabled = true;
-                return None;
-            }
+                if mul[0].starts_with("do()") {
+                    enabled = true;
+                    return None;
+                }
 
-            if mul[0].starts_with("don't()") {
-                enabled = false;
-                return None;
-            }
+                if mul[0].starts_with("don't()") {
+                    enabled = false;
+                    return None;
+                }
 
-            if !enabled {
-                return None;
-            }
+                if enabled == false {
+                    return None;
+                }
 
-            if mul[0].starts_with("mul") {
-                let num1 = mul[1].parse::<isize>().unwrap();
-                let num2 = mul[2].parse::<isize>().unwrap();
+                if mul[0].starts_with("mul") {
+                    let num1 = mul[1].parse::<isize>().unwrap();
+                    let num2 = mul[2].parse::<isize>().unwrap();
 
-                return Some((num1, num2));
-            }
+                    return Some((num1, num2));
+                }
 
-            None
+                None
+            })
         })
         .collect();
 
     // println!("Found {:?}", muls);
+    // < 83942127
+
     muls
 }
 
