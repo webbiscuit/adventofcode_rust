@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Middle page sum of correctly ordered updates is 143\n");
+    assert.stdout("Middle page sum of correctly ordered updates is 143\nMiddle page sum of incorrectly ordered then order updates is 123\n");
 
     Ok(())
 }
