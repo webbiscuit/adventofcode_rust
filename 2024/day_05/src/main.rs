@@ -92,9 +92,7 @@ fn order_update(ordering_rules: &[OrderingRule], update: &UpdateList) -> UpdateL
             //     item, ordered_list[index],
             // );
 
-            let tmp = ordered_list[index];
-            ordered_list[index] = ordered_list[i];
-            ordered_list[i] = tmp;
+            ordered_list.swap(index, i);
 
             // println!("After {:?}", ordered_list);
             // println!("---");
@@ -129,8 +127,7 @@ fn get_middle_page_sum(update_lists: &[UpdateList]) -> u32 {
         .iter()
         .map(|l| {
             let mid_point = l.len() / 2;
-            let mid_value = l[mid_point];
-            mid_value
+            l[mid_point]
         })
         .sum()
 }
