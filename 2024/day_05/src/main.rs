@@ -66,41 +66,41 @@ fn get_updates_in_correct_order(
 fn order_update(ordering_rules: &[OrderingRule], update: &UpdateList) -> UpdateList {
     let mut ordered_list: UpdateList = update.clone();
 
-    // let mut i = 1;
+    let mut i = 1;
 
-    // Just keep doing stuff until it's ordered
-    while is_list_in_order(ordering_rules, &ordered_list) == false {
-        for i in 1..update.len() {
-            let numbers_to_left = ordered_list[0..i].to_vec();
+    while i < update.len() {
+        let numbers_to_left = ordered_list[0..i].to_vec();
 
-            let item = ordered_list[i];
+        let item = ordered_list[i];
 
-            let page_rules_following = ordering_rules
-                .iter()
-                .filter(|(l, _)| *l == item)
-                .map(|(_, r)| r)
-                .collect::<Vec<_>>();
+        let page_rules_following = ordering_rules
+            .iter()
+            .filter(|(l, _)| *l == item)
+            .map(|(_, r)| r)
+            .collect::<Vec<_>>();
 
-            if let Some(index) = numbers_to_left
-                .iter()
-                .position(|p| page_rules_following.contains(&p))
-            {
-                // println!("---");
-                // println!("Numbers to left {:?}", numbers_to_left);
-                // println!("Before {:?}", ordered_list);
+        if let Some(index) = numbers_to_left
+            .iter()
+            .position(|p| page_rules_following.contains(&p))
+        {
+            // println!("---");
+            // println!("Numbers to left {:?}", numbers_to_left);
+            // println!("Before {:?}", ordered_list);
 
-                // println!(
-                //     "Item {} is in the wrong place, because of {}",
-                //     item, ordered_list[index],
-                // );
+            // println!(
+            //     "Item {} is in the wrong place, because of {}",
+            //     item, ordered_list[index],
+            // );
 
-                let tmp = ordered_list[index];
-                ordered_list[index] = ordered_list[i];
-                ordered_list[i] = tmp;
+            let tmp = ordered_list[index];
+            ordered_list[index] = ordered_list[i];
+            ordered_list[i] = tmp;
 
-                // println!("After {:?}", ordered_list);
-                // println!("---");
-            }
+            // println!("After {:?}", ordered_list);
+            // println!("---");
+            i = index
+        } else {
+            i += 1
         }
     }
 
