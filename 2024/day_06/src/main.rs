@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     io::{self, prelude::*},
 };
 
@@ -93,13 +93,14 @@ struct Guard {
     position: Point,
     direction: (i8, i8),
     map: Map,
-    visited_positions: Vec<(Point, Direction)>,
+    visited_positions: HashMap<(Point, Direction), usize>,
     start_position: Point,
 }
 
 impl Guard {
     fn new(start: (isize, isize), direction: (i8, i8), map: Map) -> Guard {
-        let visited_positions = vec![(start, direction)];
+        let mut visited_positions = HashMap::new();
+        visited_positions.insert((start, direction), 1);
 
         Guard {
             position: start,
@@ -134,7 +135,11 @@ impl Guard {
             self.turn_right();
         } else {
             self.position = next_position;
-            self.visited_positions.push((next_position, self.direction));
+            let entry = self
+                .visited_positions
+                .entry((next_position, self.direction))
+                .or_insert(0);
+            *entry += 1;
         }
     }
 
@@ -145,12 +150,11 @@ impl Guard {
 
     fn is_looping(&self) -> bool {
         // We store point and direction to make this quicker
-        let found = self
-            .visited_positions
-            .iter()
-            .filter(|(p, d)| *p == self.position && *d == self.direction);
-
-        found.count() >= 2
+        if let Some(&count) = self.visited_positions.get(&(self.position, self.direction)) {
+            count >= 2
+        } else {
+            false
+        }
     }
 }
 
@@ -196,10 +200,10 @@ fn generate_all_maps(base_map: &Map, obstacle_positions: &[Point]) -> Vec<Map> {
         .collect()
 }
 
-fn find_loops_in_maps(all_maps: &[Map], start_position: Point) -> usize {
+fn find_loops_in_maps(all_maps: &mut [Map], start_position: Point) -> usize {
     let mut guards = all_maps
-        .iter()
-        .map(|m| Guard::new(start_position, WALK_DIRECTIONS[0], m.clone()))
+        .iter_mut()
+        .map(|m| Guard::new(start_position, WALK_DIRECTIONS[0], m.to_owned()))
         .collect::<Vec<_>>();
 
     let loopers = guards.iter_mut().map(detect_guard_looping).filter(|b| *b);
@@ -238,8 +242,8 @@ fn main() -> std::io::Result<()> {
     // Don't count the start step
     let mut all_visited_positions = guard
         .visited_positions
-        .iter()
-        .map(|(p, d)| p)
+        .keys()
+        .map(|(p, _)| p)
         .copied()
         .collect::<HashSet<_>>();
 
@@ -247,9 +251,9 @@ fn main() -> std::io::Result<()> {
 
     let all_visited_positions = all_visited_positions.iter().copied().collect::<Vec<_>>();
 
-    let all_maps = generate_all_maps(&map, &all_visited_positions);
+    let mut all_maps = generate_all_maps(&map, &all_visited_positions);
 
-    let answer2 = find_loops_in_maps(&all_maps, guard.start_position);
+    let answer2 = find_loops_in_maps(&mut all_maps, guard.start_position);
 
     println!(
         "There are {} obstruction positions that will create loops",
