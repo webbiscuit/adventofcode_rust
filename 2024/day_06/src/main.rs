@@ -94,14 +94,15 @@ struct Guard {
     position: Point,
     direction: (i8, i8),
     map: Map,
-    visited_positions: HashMap<(Point, Direction), usize>,
+    visited_positions: HashSet<(Point, Direction)>,
     start_position: Point,
+    is_looping: bool,
 }
 
 impl Guard {
     fn new(start: (isize, isize), direction: (i8, i8), map: Map) -> Guard {
-        let mut visited_positions = HashMap::new();
-        visited_positions.insert((start, direction), 1);
+        let mut visited_positions = HashSet::new();
+        visited_positions.insert((start, direction));
 
         Guard {
             position: start,
@@ -109,6 +110,7 @@ impl Guard {
             map,
             visited_positions,
             start_position: start,
+            is_looping: false,
         }
     }
 
@@ -136,11 +138,16 @@ impl Guard {
             self.turn_right();
         } else {
             self.position = next_position;
-            let entry = self
+
+            if self
                 .visited_positions
-                .entry((next_position, self.direction))
-                .or_insert(0);
-            *entry += 1;
+                .contains(&(self.position, self.direction))
+            {
+                self.is_looping = true;
+            }
+
+            self.visited_positions
+                .insert((self.position, self.direction));
         }
     }
 
@@ -150,12 +157,7 @@ impl Guard {
     }
 
     fn is_looping(&self) -> bool {
-        // We store point and direction to make this quicker
-        if let Some(&count) = self.visited_positions.get(&(self.position, self.direction)) {
-            count >= 2
-        } else {
-            false
-        }
+        self.is_looping
     }
 }
 
@@ -203,7 +205,6 @@ fn find_loops_in_maps(all_maps: &mut [Map], start_position: Point) -> usize {
 
     let loopers = guards
         .par_iter_mut()
-        // .iter_mut()
         .map(detect_guard_looping)
         .filter(|b| *b);
 
@@ -241,7 +242,7 @@ fn main() -> std::io::Result<()> {
     // Don't count the start step
     let mut all_visited_positions = guard
         .visited_positions
-        .keys()
+        .iter()
         .map(|(p, _)| p)
         .copied()
         .collect::<HashSet<_>>();
