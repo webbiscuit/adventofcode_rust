@@ -1,6 +1,6 @@
 use rayon::prelude::*;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     io::{self, prelude::*},
 };
 
