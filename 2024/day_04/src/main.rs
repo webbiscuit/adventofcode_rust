@@ -160,8 +160,6 @@ const ALL_DIRECTIONS: [(i8, i8); 8] = [
 
 const X_DIRECTIONS: [(i8, i8); 2] = [(1, 1), (1, -1)];
 
-// fn get
-
 fn parse(lines: &[String]) -> Grid {
     let grid_data = lines.iter().flat_map(|l| l.chars()).collect::<Vec<_>>();
 
