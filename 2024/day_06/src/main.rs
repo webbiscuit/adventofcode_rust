@@ -166,7 +166,12 @@ fn count_complete_guard_walk_steps(guard: &mut Guard) -> usize {
         guard.make_one_step();
     }
 
-    guard.visited_positions.iter().collect::<HashSet<_>>().len()
+    guard
+        .visited_positions
+        .iter()
+        .map(|(p, _)| p)
+        .collect::<HashSet<_>>()
+        .len()
 }
 
 fn detect_guard_looping(guard: &mut Guard) -> bool {
@@ -256,7 +261,7 @@ fn main() -> std::io::Result<()> {
     let answer2 = find_loops_in_maps(&mut all_maps, guard.start_position);
 
     println!(
-        "There are {} obstruction positions that will create loops",
+        "There are {} obstruction positions that will create loops.",
         answer2
     );
     Ok(())

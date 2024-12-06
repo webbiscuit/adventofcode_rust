@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Guard visits 41 distinct positions.\nThere are 6 obstruction positions that will create loops.");
+    assert.stdout("Guard visits 41 distinct positions.\nThere are 6 obstruction positions that will create loops.\n");
 
     Ok(())
 }
