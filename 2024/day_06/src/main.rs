@@ -61,13 +61,12 @@ impl Map {
     fn find_first_position(&self, needle: char) -> Option<(isize, isize)> {
         let ix = self.data.iter().position(|c| *c == needle);
 
-        match ix {
-            Some(ix) => Some((
+        ix.map(|ix| {
+            (
                 ix as isize % self.width as isize,
                 ix as isize / self.height as isize,
-            )),
-            _ => None,
-        }
+            )
+        })
     }
 }
 
@@ -88,19 +87,19 @@ impl std::fmt::Display for Map {
 }
 
 type Point = (isize, isize);
+type Direction = (i8, i8);
 
 struct Guard {
     position: Point,
     direction: (i8, i8),
     map: Map,
-    visited_positions: Vec<Point>,
+    visited_positions: Vec<(Point, Direction)>,
     start_position: Point,
 }
 
 impl Guard {
     fn new(start: (isize, isize), direction: (i8, i8), map: Map) -> Guard {
-        let mut visited_positions = Vec::new();
-        visited_positions.push(start);
+        let visited_positions = vec![(start, direction)];
 
         Guard {
             position: start,
@@ -135,7 +134,7 @@ impl Guard {
             self.turn_right();
         } else {
             self.position = next_position;
-            self.visited_positions.push(next_position);
+            self.visited_positions.push((next_position, self.direction));
         }
     }
 
@@ -145,15 +144,13 @@ impl Guard {
     }
 
     fn is_looping(&self) -> bool {
-        // If we've seen a point more than 4 times we are looping
-        // We can maybe store point and direction to make this quicker
-
-        let seen_this = self
+        // We store point and direction to make this quicker
+        let found = self
             .visited_positions
             .iter()
-            .filter(|&p| *p == self.position);
+            .filter(|(p, d)| *p == self.position && *d == self.direction);
 
-        seen_this.count() > 4
+        found.count() >= 2
     }
 }
 
@@ -202,24 +199,10 @@ fn generate_all_maps(base_map: &Map, obstacle_positions: &[Point]) -> Vec<Map> {
 fn find_loops_in_maps(all_maps: &[Map], start_position: Point) -> usize {
     let mut guards = all_maps
         .iter()
-        .map(|m| {
-            let g = Guard::new(start_position, WALK_DIRECTIONS[0], m.clone());
-            g
-        })
+        .map(|m| Guard::new(start_position, WALK_DIRECTIONS[0], m.clone()))
         .collect::<Vec<_>>();
 
-    let loopers = guards
-        .iter_mut()
-        .map(|g| {
-            let looper = detect_guard_looping(g);
-
-            // if looper {
-            //     println!("Looping\n{}", g.map);
-            // }
-
-            looper
-        })
-        .filter(|b| *b == true);
+    let loopers = guards.iter_mut().map(detect_guard_looping).filter(|b| *b);
 
     loopers.count()
 }
@@ -256,15 +239,13 @@ fn main() -> std::io::Result<()> {
     let mut all_visited_positions = guard
         .visited_positions
         .iter()
-        .skip(1)
+        .map(|(p, d)| p)
         .copied()
         .collect::<HashSet<_>>();
 
     all_visited_positions.remove(&guard.start_position);
 
     let all_visited_positions = all_visited_positions.iter().copied().collect::<Vec<_>>();
-
-    println!("Maps to check: {}", all_visited_positions.len());
 
     let all_maps = generate_all_maps(&map, &all_visited_positions);
 
