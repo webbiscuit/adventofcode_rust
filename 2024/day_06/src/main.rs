@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
     io::{self, prelude::*},
@@ -167,7 +168,6 @@ fn count_complete_guard_walk_steps(guard: &mut Guard) -> usize {
 }
 
 fn detect_guard_looping(guard: &mut Guard) -> bool {
-    let mut count = 0;
     loop {
         if guard.is_walk_complete() {
             return false;
@@ -177,12 +177,7 @@ fn detect_guard_looping(guard: &mut Guard) -> bool {
             return true;
         }
 
-        count += 1;
         guard.make_one_step();
-
-        if count % 10000 == 0 {
-            println!("We're at loop {}", count);
-        }
     }
 
     // < 1567
@@ -206,7 +201,11 @@ fn find_loops_in_maps(all_maps: &mut [Map], start_position: Point) -> usize {
         .map(|m| Guard::new(start_position, WALK_DIRECTIONS[0], m.to_owned()))
         .collect::<Vec<_>>();
 
-    let loopers = guards.iter_mut().map(detect_guard_looping).filter(|b| *b);
+    let loopers = guards
+        .par_iter_mut()
+        // .iter_mut()
+        .map(detect_guard_looping)
+        .filter(|b| *b);
 
     loopers.count()
 }
