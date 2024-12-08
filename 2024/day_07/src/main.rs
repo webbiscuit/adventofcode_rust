@@ -53,7 +53,6 @@ fn check_nums_with_concats_rec(
     target: isize,
     nums: &[isize],
     ops: Vec<Operation>,
-    digits_concatted: isize,
 ) -> Option<Vec<Operation>> {
     // println!("T: {}", target);
 
@@ -64,14 +63,11 @@ fn check_nums_with_concats_rec(
 
     let n = nums[0];
 
-    // > 10871587022811
-    // > 8538289912053
-    // > 8586015541640
-
     // println!("T: {}, n: {}", target, n);
 
     if (target - n) == 0 {
         // println!("WE ARE DONE");
+        // println!("{:?}", ops.clone().iter().rev().collect::<Vec<_>>());
         // We're done!!
         return Some(ops);
     }
@@ -81,7 +77,7 @@ fn check_nums_with_concats_rec(
         let mut ops = ops.clone();
         ops.push(Operation::Multiply);
 
-        let ret = check_nums_with_concats_rec(target / n, &nums[1..], ops, 1);
+        let ret = check_nums_with_concats_rec(target / n, &nums[1..], ops);
 
         if let Some(result) = ret {
             return Some(result);
@@ -92,20 +88,22 @@ fn check_nums_with_concats_rec(
         // println!("It's an add");
         let mut ops = ops.clone();
         ops.push(Operation::Add);
-        let ret = check_nums_with_concats_rec(target - n, &nums[1..], ops, 1);
+        let ret = check_nums_with_concats_rec(target - n, &nums[1..], ops);
 
         if let Some(result) = ret {
             return Some(result);
         }
     }
 
-    let modder = 10_isize.pow(digits_concatted as u32);
-    // println!("{}", modder);
-    if target % modder == n {
+    let num_digits = n.to_string().len();
+    let mod_value = 10_isize.pow(num_digits as u32);
+    // println!("CHECK {}", target % mod_value);
+
+    if target % mod_value == n {
+        // println!("Concat");
         let mut ops = ops.clone();
         ops.push(Operation::Concat);
-        let ret =
-            check_nums_with_concats_rec(target / modder, &nums[1..], ops, digits_concatted + 1);
+        let ret = check_nums_with_concats_rec(target / mod_value, &nums[1..], ops);
 
         if let Some(result) = ret {
             return Some(result);
@@ -141,7 +139,7 @@ fn total_possible_calibrations_with_concats(targets: &Targets) -> isize {
         .map(|(target, nums)| {
             let rev_list = nums.iter().rev().copied().collect::<Vec<_>>();
 
-            let res = check_nums_with_concats_rec(*target, &rev_list, vec![], 1)
+            let res = check_nums_with_concats_rec(*target, &rev_list, vec![])
                 .into_iter()
                 .rev()
                 .collect::<Vec<_>>();
