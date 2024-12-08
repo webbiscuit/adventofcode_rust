@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Total calibration result is 3749\n");
+    assert.stdout("Total calibration result is 3749\nTotal calibration result with concats is 11387\n");
 
     Ok(())
 }
