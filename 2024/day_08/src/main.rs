@@ -79,11 +79,50 @@ impl Grid {
 
         antinodes
     }
+
+    fn find_echoed_antinodes(&self) -> HashSet<Point> {
+        let mut antinodes: HashSet<Point> = HashSet::new();
+
+        self.antennas.keys().for_each(|k| {
+            for (i, &a) in self.antennas[k].iter().enumerate() {
+                for (_, &b) in self.antennas[k].iter().enumerate().skip(i + 1) {
+                    let diff = (a.0 - b.0, a.1 - b.1);
+                    let mut p1 = a;
+                    let mut p2 = b;
+
+                    antinodes.insert(p1);
+                    antinodes.insert(p2);
+
+                    loop {
+                        p1 = (p1.0 + diff.0, p1.1 + diff.1);
+
+                        if self.in_bounds(p1.0, p1.1) {
+                            antinodes.insert(p1);
+                        } else {
+                            break;
+                        }
+                    }
+
+                    loop {
+                        p2 = (p2.0 - diff.0, p2.1 - diff.1);
+
+                        if self.in_bounds(p2.0, p2.1) {
+                            antinodes.insert(p2);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+
+        antinodes
+    }
 }
 
 impl std::fmt::Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let antinodes = self.find_antinodes();
+        let antinodes = self.find_echoed_antinodes();
 
         for y in 0..self.height {
             for x in 0..self.width {
@@ -126,6 +165,11 @@ fn main() -> std::io::Result<()> {
     let result = antinodes.len();
 
     println!("There are {} antinodes in bounds.", result);
+
+    let antinodes = grid.find_echoed_antinodes();
+    let result2 = antinodes.len();
+
+    println!("There are {} echoed antinodes in bounds.", result2);
 
     Ok(())
 }
