@@ -31,7 +31,7 @@ fn compact(mut disk: Disk) -> Disk {
     let mut i = 0;
     let mut j = disk.len() - 1;
 
-    while i < j {
+    while j > 0 {
         let data_to_move = disk[j];
 
         if data_to_move.is_some() {
@@ -40,6 +40,11 @@ fn compact(mut disk: Disk) -> Disk {
                 .enumerate()
                 .find(|(_, c)| c.is_none())
                 .expect("No disk space left");
+
+            // We've gone through it all
+            if (first_space.0 + i) > j {
+                break;
+            }
 
             *first_space.1 = data_to_move;
             i = first_space.0 + i;
@@ -54,9 +59,8 @@ fn compact(mut disk: Disk) -> Disk {
 
 fn checksum(disk: &Disk) -> usize {
     disk.iter()
-        .filter_map(|&f| f)
         .enumerate()
-        .map(|(ix, i)| ix * i)
+        .map(|(ix, i)| ix * i.unwrap_or(0))
         .sum()
 }
 
