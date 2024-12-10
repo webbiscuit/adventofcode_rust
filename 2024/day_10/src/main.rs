@@ -65,7 +65,6 @@ impl Map {
             // println!("Pos {:?}, current: {}", pos, current_height);
 
             if current_height == target_height {
-                paths.push(pos);
                 continue;
             }
 
@@ -131,6 +130,47 @@ impl Map {
 
         found_end_locs_in_all_steps.len()
     }
+
+    fn count_all_routes_to_end(&self, start: u8, end: u8) -> usize {
+        let start_locs = self.data.iter().enumerate().filter_map(|(ix, d)| {
+            if *d == start {
+                let p = ((ix % self.width) as isize, (ix / self.width) as isize);
+                Some((p.0, p.1))
+            } else {
+                None
+            }
+        });
+
+        let all_unique_steps = start_locs
+            .map(|p| self.find_paths_from_point_to_target(p, end).to_vec())
+            .collect::<Vec<_>>();
+
+        let end_locs = self
+            .data
+            .iter()
+            .enumerate()
+            .filter_map(|(ix, d)| {
+                if *d == end {
+                    let p = ((ix % self.width) as isize, (ix / self.width) as isize);
+                    Some((p.0, p.1))
+                } else {
+                    None
+                }
+            })
+            .collect::<HashSet<_>>();
+
+        let found_end_locs_in_all_steps = all_unique_steps
+            .iter()
+            .flat_map(|steps| {
+                let intersects = steps.iter().filter(|s| end_locs.contains(s));
+
+                // println!("{:?}", intersects);
+                intersects
+            })
+            .collect::<Vec<_>>();
+
+        found_end_locs_in_all_steps.len()
+    }
 }
 
 impl std::fmt::Display for Map {
@@ -168,6 +208,10 @@ fn main() -> std::io::Result<()> {
     let answer = map.count_any_routes_to_end(0, 9);
 
     println!("The sum of all the trailheads {}", answer);
+
+    let answer = map.count_all_routes_to_end(0, 9);
+
+    println!("The sum of the ratings of all the trailheads {}", answer);
 
     Ok(())
 }

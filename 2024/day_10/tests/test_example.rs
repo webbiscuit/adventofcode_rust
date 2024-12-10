@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The sum of all the trailheads 36\n");
+    assert.stdout("The sum of all the trailheads 36\nThe sum of the ratings of all the trailheads 81\n");
 
     Ok(())
 }
