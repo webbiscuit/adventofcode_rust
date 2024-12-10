@@ -1,18 +1,18 @@
-use std::{
-    io::{self, prelude::*},
-    iter::Zip,
-};
+use std::io::{self, prelude::*};
 
 type FileId = usize;
 type Disk = Vec<Option<FileId>>;
 
 fn parse(lines: &[String]) -> Disk {
     let line = &lines[0];
+    let mut total_ix = 0;
+
     let disk = line
         .char_indices()
         .flat_map(|(ix, c)| {
             let count = c.to_digit(10).expect("Not a digit");
-            // println!("Count {}", count);
+
+            total_ix += count as usize;
 
             if ix % 2 == 0 {
                 let id = ix / 2;
@@ -57,6 +57,55 @@ fn compact(mut disk: Disk) -> Disk {
     disk
 }
 
+fn compact_by_file(mut disk: Disk) -> Disk {
+    // let mut i = 0;
+    let mut file_id_to_move = disk.last().unwrap().unwrap();
+
+    while file_id_to_move > 0 {
+        let start_ix = disk
+            .iter()
+            .position(|&f| f == Some(file_id_to_move))
+            .expect("File ID not found");
+
+        let end_ix = disk
+            .iter()
+            .rposition(|&f| f == Some(file_id_to_move))
+            .expect("File ID not found");
+
+        let chars_to_move = end_ix - start_ix + 1;
+
+        // println!(
+        //     "ID {}, Moving {}, ix {}",
+        //     file_id_to_move, chars_to_move, start_ix
+        // );
+
+        let first_space = disk
+            .windows(chars_to_move)
+            .position(|window| window.iter().all(|&c| c.is_none()));
+
+        if let Some(first_space) = first_space {
+            // println!("first_space {}", first_space);
+
+            if first_space > start_ix {
+                file_id_to_move -= 1;
+                continue;
+            }
+
+            for n in 0..chars_to_move {
+                let source_ix = start_ix + n;
+
+                // println!("SourceIX {}", source_ix);
+                disk[first_space + n] = disk[source_ix];
+                disk[source_ix] = None;
+            }
+        }
+
+        file_id_to_move -= 1;
+    }
+
+    disk
+}
+
 fn checksum(disk: &Disk) -> usize {
     disk.iter()
         .enumerate()
@@ -72,12 +121,22 @@ fn main() -> std::io::Result<()> {
 
     // println!("Disk {:?}", disk);
 
-    let compacted = compact(disk);
+    let compacted = compact(disk.clone());
     let result = checksum(&compacted);
 
     // println!("Disk {:?}", compacted);
 
     println!("The filesystem checksum is {}", result);
+
+    let compacted = compact_by_file(disk);
+    let result = checksum(&compacted);
+
+    // println!("Disk {:?}", compacted);
+
+    println!(
+        "When file compacting, the filesystem checksum is {}",
+        result
+    );
 
     Ok(())
 }

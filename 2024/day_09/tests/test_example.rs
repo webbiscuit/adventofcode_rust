@@ -14,7 +14,9 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The filesystem checksum is 1928\n");
+    assert.stdout(
+        "The filesystem checksum is 1928\nWhen file compacting, the filesystem checksum is 2858\n",
+    );
 
     Ok(())
 }
