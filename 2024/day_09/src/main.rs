@@ -47,7 +47,7 @@ fn compact(mut disk: Disk) -> Disk {
             }
 
             *first_space.1 = data_to_move;
-            i = first_space.0 + i;
+            i += first_space.0;
             disk[j] = None;
         }
 
