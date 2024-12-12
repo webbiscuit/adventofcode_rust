@@ -1,9 +1,10 @@
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashSet, VecDeque},
     io::{self, prelude::*},
 };
 
 type Point = (isize, isize);
+type Facing = (isize, isize);
 type Area = usize;
 type Perimeter = usize;
 type Side = usize;
@@ -74,10 +75,6 @@ impl Map {
             .collect()
     }
 
-    fn find_all_fields(&self) -> HashSet<&char> {
-        self.data.iter().collect::<HashSet<&char>>()
-    }
-
     fn find_areas_and_perimeters(&self) -> Vec<(char, Area, Perimeter, Side)> {
         let mut visited: HashSet<Point> = HashSet::new();
 
@@ -94,7 +91,7 @@ impl Map {
                 }
 
                 // Perimeters can appear twice
-                let mut perimeter_points: Vec<Point> = Vec::new();
+                let mut perimeter_points: Vec<(Point, Facing)> = Vec::new();
                 let mut area_points: HashSet<Point> = HashSet::new();
                 area_points.insert(p);
 
@@ -109,8 +106,9 @@ impl Map {
                     let neighbours = self.get_neighbours(point.0, point.1);
 
                     for n in neighbours {
+                        let dir = (n.0 - point.0, n.1 - point.1);
                         if !self.in_bounds(n.0, n.1) {
-                            perimeter_points.push(n);
+                            perimeter_points.push((n, dir));
                         } else {
                             let neighbouring_field = self.get_char_at(n.0, n.1).unwrap();
 
@@ -119,7 +117,7 @@ impl Map {
                                 area_points.insert(n);
                                 visited.insert(point);
                             } else {
-                                perimeter_points.push(n);
+                                perimeter_points.push((n, dir));
                             }
                         }
                     }
@@ -128,7 +126,7 @@ impl Map {
                 let mut sides: Vec<Vec<Point>> = vec![];
                 let mut points_left = perimeter_points.clone();
 
-                while let Some(start) = points_left.pop() {
+                while let Some((start, dir)) = points_left.pop() {
                     let mut side: Vec<Point> = vec![start];
                     let mut side_explore_list: VecDeque<Point> = VecDeque::new();
                     side_explore_list.push_back(start);
@@ -141,17 +139,8 @@ impl Map {
                                 continue;
                             }
 
-                            if points_left.contains(&n) {
-                                // This is a corner
-                                if let Some(p2) = self.get_char_at(n.0, n.1) {
-                                    println!("{}", p2);
-                                    if p2 == *field {
-                                        println!("SKIPP");
-                                        continue;
-                                    }
-                                }
-
-                                if let Some(pos) = points_left.iter().position(|&p| p == n) {
+                            if points_left.contains(&(n, dir)) {
+                                if let Some(pos) = points_left.iter().position(|&p| p == (n, dir)) {
                                     points_left.remove(pos);
                                 }
                                 side_explore_list.push_back(n);
@@ -167,19 +156,8 @@ impl Map {
                                 continue;
                             }
 
-                            if points_left.contains(&n) {
-                                // This is a corner
-                                if let Some(p2) = self.get_char_at(n.0, n.1) {
-                                    println!("{}", p2);
-
-                                    if p2 == *field {
-                                        println!("SKIPP");
-
-                                        continue;
-                                    }
-                                }
-
-                                if let Some(pos) = points_left.iter().position(|&p| p == n) {
+                            if points_left.contains(&(n, dir)) {
+                                if let Some(pos) = points_left.iter().position(|&p| p == (n, dir)) {
                                     points_left.remove(pos);
                                 }
                                 side_explore_list.push_back(n);
@@ -192,17 +170,17 @@ impl Map {
                     sides.push(side);
                 }
 
-                println!(
-                    "{} area {:?} perimeter {:?} sides {:?}",
-                    *field, area_points, perimeter_points, sides,
-                );
-                println!(
-                    "{} area {:?} perimeter {:?} side {:?}",
-                    *field,
-                    area_points.len(),
-                    perimeter_points.len(),
-                    sides.len()
-                );
+                // println!(
+                //     "{} area {:?} perimeter {:?} sides {:?}",
+                //     *field, area_points, perimeter_points, sides,
+                // );
+                // println!(
+                //     "{} area {:?} perimeter {:?} side {:?}",
+                //     *field,
+                //     area_points.len(),
+                //     perimeter_points.len(),
+                //     sides.len()
+                // );
 
                 Some((
                     *field,
@@ -273,5 +251,3 @@ fn main() -> std::io::Result<()> {
 
     Ok(())
 }
-
-// > 811603
