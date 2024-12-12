@@ -6,6 +6,7 @@ use std::{
 type Point = (isize, isize);
 type Area = usize;
 type Perimeter = usize;
+type Side = usize;
 
 struct Map {
     data: Vec<char>,
@@ -15,6 +16,8 @@ struct Map {
 
 impl Map {
     const ALL_DIRECTIONS: [(i8, i8); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
+    const LR_DIRECTIONS: [(i8, i8); 2] = [(1, 0), (-1, 0)];
+    const UD_DIRECTIONS: [(i8, i8); 2] = [(0, 1), (0, -1)];
 
     fn new(data: Vec<char>, width: usize, height: usize) -> Map {
         Map {
@@ -49,11 +52,33 @@ impl Map {
             .collect()
     }
 
+    fn get_lr_neighbours(&self, x: isize, y: isize) -> Vec<Point> {
+        Map::LR_DIRECTIONS
+            .iter()
+            .map(|&(dx, dy)| {
+                let p = (x + dx as isize, y + dy as isize);
+
+                p
+            })
+            .collect()
+    }
+
+    fn get_ud_neighbours(&self, x: isize, y: isize) -> Vec<Point> {
+        Map::UD_DIRECTIONS
+            .iter()
+            .map(|&(dx, dy)| {
+                let p = (x + dx as isize, y + dy as isize);
+
+                p
+            })
+            .collect()
+    }
+
     fn find_all_fields(&self) -> HashSet<&char> {
         self.data.iter().collect::<HashSet<&char>>()
     }
 
-    fn find_areas_and_perimeters(&self) -> Vec<(char, Area, Perimeter)> {
+    fn find_areas_and_perimeters(&self) -> Vec<(char, Area, Perimeter, Side)> {
         let mut visited: HashSet<Point> = HashSet::new();
 
         self.data
@@ -100,18 +125,91 @@ impl Map {
                     }
                 }
 
-                // println!(
-                //     "{} area {:?} perimeter {:?}",
-                //     *field, area_points, perimeter_points
-                // );
-                // println!(
-                //     "{} area {:?} perimeter {:?}",
-                //     *field,
-                //     area_points.len(),
-                //     perimeter_points.len()
-                // );
+                let mut sides: Vec<Vec<Point>> = vec![];
+                let mut points_left = perimeter_points.clone();
 
-                Some((*field, area_points.len(), perimeter_points.len()))
+                while let Some(start) = points_left.pop() {
+                    let mut side: Vec<Point> = vec![start];
+                    let mut side_explore_list: VecDeque<Point> = VecDeque::new();
+                    side_explore_list.push_back(start);
+
+                    while let Some(point) = side_explore_list.pop_front() {
+                        let neighbours = self.get_lr_neighbours(point.0, point.1);
+
+                        for n in neighbours {
+                            if side.contains(&n) {
+                                continue;
+                            }
+
+                            if points_left.contains(&n) {
+                                // This is a corner
+                                if let Some(p2) = self.get_char_at(n.0, n.1) {
+                                    println!("{}", p2);
+                                    if p2 == *field {
+                                        println!("SKIPP");
+                                        continue;
+                                    }
+                                }
+
+                                if let Some(pos) = points_left.iter().position(|&p| p == n) {
+                                    points_left.remove(pos);
+                                }
+                                side_explore_list.push_back(n);
+                                side.push(n);
+                                continue;
+                            }
+                        }
+
+                        let neighbours = self.get_ud_neighbours(point.0, point.1);
+
+                        for n in neighbours {
+                            if side.contains(&n) {
+                                continue;
+                            }
+
+                            if points_left.contains(&n) {
+                                // This is a corner
+                                if let Some(p2) = self.get_char_at(n.0, n.1) {
+                                    println!("{}", p2);
+
+                                    if p2 == *field {
+                                        println!("SKIPP");
+
+                                        continue;
+                                    }
+                                }
+
+                                if let Some(pos) = points_left.iter().position(|&p| p == n) {
+                                    points_left.remove(pos);
+                                }
+                                side_explore_list.push_back(n);
+                                side.push(n);
+                                continue;
+                            }
+                        }
+                    }
+
+                    sides.push(side);
+                }
+
+                println!(
+                    "{} area {:?} perimeter {:?} sides {:?}",
+                    *field, area_points, perimeter_points, sides,
+                );
+                println!(
+                    "{} area {:?} perimeter {:?} side {:?}",
+                    *field,
+                    area_points.len(),
+                    perimeter_points.len(),
+                    sides.len()
+                );
+
+                Some((
+                    *field,
+                    area_points.len(),
+                    perimeter_points.len(),
+                    sides.len(),
+                ))
             })
             .collect()
     }
@@ -121,7 +219,17 @@ impl Map {
         let all_areas_and_permeters = self.find_areas_and_perimeters();
         let total_price = all_areas_and_permeters
             .iter()
-            .fold(0, |acc, (c, a, p)| acc + a * p);
+            .fold(0, |acc, (_, a, p, _)| acc + a * p);
+
+        total_price
+    }
+
+    fn calculate_total_price_of_fence_with_sides(&self) -> usize {
+        // let all_fields = self.find_all_fields();
+        let all_areas_and_permeters = self.find_areas_and_perimeters();
+        let total_price = all_areas_and_permeters
+            .iter()
+            .fold(0, |acc, (_, a, _, s)| acc + a * s);
 
         total_price
     }
@@ -158,8 +266,12 @@ fn main() -> std::io::Result<()> {
     let map = parse(&lines);
 
     let result = map.calculate_total_price_of_fence();
+    let result2 = map.calculate_total_price_of_fence_with_sides();
 
     println!("The total price of fence is {}", result);
+    println!("The total price of fence with discount is {}", result2);
 
     Ok(())
 }
+
+// > 811603

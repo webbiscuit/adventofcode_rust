@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The total price of fence is 1930\n");
+    assert.stdout("The total price of fence is 1930\nThe total price of fence with discount is 1206\n");
 
     Ok(())
 }
