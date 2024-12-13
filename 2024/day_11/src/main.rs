@@ -1,42 +1,14 @@
-use core::num;
 use std::{
+    collections::HashMap,
     io::{self, prelude::*},
     usize,
 };
 
-fn split_number(n: usize) -> (usize, usize) {
-    let num_string = n.to_string();
-    let len = num_string.len();
-
-    // Only call this for even number of digits
-    assert!(len % 2 == 0);
-
-    let (left, right) = num_string.split_at(len / 2);
-    (
-        left.parse::<usize>().unwrap(),
-        right.parse::<usize>().unwrap(),
-    )
-}
-
-type Stone = usize;
-
-enum Stones {
-    Single(Stone),
-    Double((Stone, Stone)),
-}
-
-fn blink_stone(n: Stone) -> Stones {
-    if n == 0 {
-        return Stones::Single(1);
-    }
-
+fn split_number(n: Stone) -> (Stone, Stone) {
     let len = ((n as f64).log10() as usize) + 1;
-
-    if len % 2 == 0 {
-        return Stones::Double(split_number(n));
-    }
-
-    return Stones::Single(n * 2024);
+    let half_len = len / 2;
+    let divisor = 10_usize.pow(half_len as u32);
+    (n / divisor, n % divisor)
 }
 
 fn parse(lines: &[String]) -> Vec<Stone> {
@@ -46,34 +18,87 @@ fn parse(lines: &[String]) -> Vec<Stone> {
         .collect()
 }
 
-fn naive_blink(stones: &[Stone]) -> Vec<Stone> {
-    let mut new_stones = vec![];
+fn blink_stone(n: Stone) -> Vec<Stone> {
+    if n == 0 {
+        return vec![1];
+    }
 
-    for s in stones {
-        let s = blink_stone(*s);
+    let len = ((n as f64).log10() as usize) + 1;
 
-        match s {
-            Stones::Single(s) => new_stones.push(s),
-            Stones::Double((s, s2)) => {
-                new_stones.push(s);
-                new_stones.push(s2);
-            }
+    if len % 2 == 0 {
+        let (left, right) = split_number(n);
+        return vec![left, right];
+    }
+
+    return vec![n * 2024];
+}
+
+type Stone = usize;
+
+struct CachedCounter {
+    blink_cache: HashMap<Stone, Vec<Stone>>,
+    stone_counts: HashMap<Stone, usize>,
+}
+
+impl CachedCounter {
+    fn new() -> Self {
+        CachedCounter {
+            blink_cache: HashMap::new(),
+            stone_counts: HashMap::new(),
         }
     }
 
-    // println!("{:?}", new_stones);
+    fn cached_blink_stone(&mut self, n: Stone) -> Vec<Stone> {
+        if let Some(lookup) = self.blink_cache.get(&n) {
+            return lookup.clone();
+        }
 
-    new_stones
-}
+        let answer = blink_stone(n);
 
-fn count_after_blinks(start: Vec<Stone>, times: usize) -> usize {
-    let mut stones = start;
+        self.blink_cache.insert(n, answer.clone());
 
-    for _ in 0..times {
-        stones = naive_blink(&stones);
+        answer
     }
 
-    stones.len()
+    fn naive_blink(&mut self, stones: &[Stone]) -> Vec<Stone> {
+        stones
+            .iter()
+            .flat_map(|&s| self.cached_blink_stone(s))
+            .collect()
+    }
+
+    fn counted_blink(&mut self) {
+        let stone_counts: Vec<(Stone, usize)> =
+            self.stone_counts.iter().map(|(&k, &v)| (k, v)).collect();
+
+        // println!("stone_couints {:?}", stone_counts);
+
+        for (k, v) in stone_counts {
+            let new_stone = self.cached_blink_stone(k);
+
+            // println!("Getting a stone for {} - {:?}", k, new_stone);
+
+            for stone in new_stone {
+                *self.stone_counts.entry(stone).or_insert(0) += v;
+            }
+
+            *self.stone_counts.entry(k).or_insert(0) -= v;
+        }
+    }
+
+    fn count_after_blinks(&mut self, start: Vec<Stone>, times: usize) -> usize {
+        self.stone_counts.clear();
+
+        for stone in start {
+            *self.stone_counts.entry(stone).or_insert(0) += 1;
+        }
+
+        for _ in 0..times {
+            self.counted_blink();
+        }
+
+        self.stone_counts.values().sum()
+    }
 }
 
 fn main() -> std::io::Result<()> {
@@ -82,17 +107,13 @@ fn main() -> std::io::Result<()> {
 
     let nums = parse(&lines);
 
-    // println!("{:?}", nums);
+    let mut cached_counter = CachedCounter::new();
 
-    let result = count_after_blinks(nums.clone(), 25);
-
-    // println!("{:?}", split_number(512072));
+    let result = cached_counter.count_after_blinks(nums.clone(), 25);
 
     println!("After 25 blinks, there are {} stones", result);
 
-    let result = count_after_blinks(nums, 75);
-
-    // println!("{:?}", split_number(512072));
+    let result = cached_counter.count_after_blinks(nums, 75);
 
     println!("After 75 blinks, there are {} stones", result);
 

@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("After 25 blinks, there are 55312 stones\n");
+    assert.stdout("After 25 blinks, there are 55312 stones\nAfter 75 blinks, there are 65601038650482 stones\n");
 
     Ok(())
 }
