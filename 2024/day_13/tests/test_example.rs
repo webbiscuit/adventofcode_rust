@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("You need to spend 480 tokens to win all the prizes\n");
+    assert.stdout("You need to spend 480 tokens to win all the prizes\nYou need to spend 875318608908 tokens to win all the new prizes\n");
 
     Ok(())
 }

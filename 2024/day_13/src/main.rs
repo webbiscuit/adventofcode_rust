@@ -7,7 +7,6 @@ type MoveVector = (isize, isize);
 #[derive(Debug)]
 struct Machine {
     prize_position: Position,
-    claw_position: Position,
     button_a: MoveVector,
     button_b: MoveVector,
 }
@@ -15,11 +14,16 @@ struct Machine {
 impl Machine {
     fn new(button_a: MoveVector, button_b: MoveVector, prize_position: Position) -> Machine {
         Machine {
-            claw_position: (0, 0),
             prize_position,
             button_a,
             button_b,
         }
+    }
+
+    fn bump_prize_position(&mut self) {
+        let bump = 10000000000000;
+        self.prize_position.0 += bump;
+        self.prize_position.1 += bump;
     }
 }
 
@@ -140,13 +144,23 @@ fn count_tokens_for_all_machine(machines: &[Machine]) -> usize {
 fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
-    let machines = parse(&lines);
+    let mut machines = parse(&lines);
 
     // println!("{:?}", machines);
 
     let answer = count_tokens_for_all_machine(&machines);
 
     println!("You need to spend {} tokens to win all the prizes", answer);
+
+    // Move to the new prize position
+    machines.iter_mut().for_each(|m| m.bump_prize_position());
+
+    let answer = count_tokens_for_all_machine(&machines);
+
+    println!(
+        "You need to spend {} tokens to win all the new prizes",
+        answer
+    );
 
     Ok(())
 }
