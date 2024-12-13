@@ -1,7 +1,6 @@
 use std::{
     collections::HashMap,
     io::{self, prelude::*},
-    usize,
 };
 
 fn split_number(n: Stone) -> (Stone, Stone) {
@@ -30,7 +29,7 @@ fn blink_stone(n: Stone) -> Vec<Stone> {
         return vec![left, right];
     }
 
-    return vec![n * 2024];
+    vec![n * 2024]
 }
 
 type Stone = usize;
