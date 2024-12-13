@@ -28,7 +28,7 @@ impl Machine {
 }
 
 fn parse(lines: &[String]) -> Vec<Machine> {
-    let machine_split: Vec<_> = lines.split(|l| l == "").collect();
+    let machine_split: Vec<_> = lines.split(|l| l.is_empty()).collect();
 
     machine_split
         .iter()
@@ -40,7 +40,7 @@ fn parse(lines: &[String]) -> Vec<Machine> {
             let prize_text = &m[2];
 
             let a: (isize, isize) = re
-                .captures_iter(&button_a_text)
+                .captures_iter(button_a_text)
                 .map(|mul| mul[1].parse::<isize>().unwrap())
                 .collect::<Vec<_>>()
                 .try_into()
@@ -48,7 +48,7 @@ fn parse(lines: &[String]) -> Vec<Machine> {
                 .expect("Only expecting 2 numbers");
 
             let b: (isize, isize) = re
-                .captures_iter(&button_b_text)
+                .captures_iter(button_b_text)
                 .map(|mul| mul[1].parse::<isize>().unwrap())
                 .collect::<Vec<_>>()
                 .try_into()
@@ -56,7 +56,7 @@ fn parse(lines: &[String]) -> Vec<Machine> {
                 .expect("Only expecting 2 numbers");
 
             let prize: (isize, isize) = re
-                .captures_iter(&prize_text)
+                .captures_iter(prize_text)
                 .map(|mul| mul[1].parse::<isize>().unwrap())
                 .collect::<Vec<_>>()
                 .try_into()
@@ -126,17 +126,13 @@ fn count_tokens_for_machine(machine: &Machine) -> Option<usize> {
 
     // println!("solved {:?}", solved);
 
-    if let Some(solved) = solved {
-        Some((solved.0 * A_TOKEN_COST + solved.1 * B_TOKEN_COST) as usize)
-    } else {
-        None
-    }
+    solved.map(|solved| (solved.0 * A_TOKEN_COST + solved.1 * B_TOKEN_COST) as usize)
 }
 
 fn count_tokens_for_all_machine(machines: &[Machine]) -> usize {
     machines
         .iter()
-        .filter_map(|m| count_tokens_for_machine(m))
+        .filter_map(count_tokens_for_machine)
         // .inspect(|t| println!("Token cost {}", t))
         .sum()
 }
