@@ -85,12 +85,64 @@ fn count_robots_in_quadrants(robots: &[Robot], width: usize, height: usize) -> u
         }
     });
 
-    // println!("TL {:?}", tl);
-    // println!("TR {:?}", tr);
-    // println!("BL {:?}", bl);
-    // println!("BR {:?}", br);
-
     tl.len() * tr.len() * bl.len() * br.len()
+}
+
+fn draw(robots: &[Robot], width: usize, height: usize) {
+    let mut grid = vec![vec!['.'; width]; height];
+
+    for robot in robots {
+        let (x, y) = robot.position;
+        grid[y as usize][x as usize] = 'R';
+    }
+
+    for row in grid {
+        let line: String = row.iter().collect();
+        println!("{}", line);
+    }
+}
+
+fn are_many_robots_adjacent(robots: &[Robot]) -> bool {
+    let mut positions = robots.iter().map(|r| r.position).collect::<Vec<_>>();
+    positions.sort();
+
+    for window in positions.windows(10) {
+        let mut adjacent = true;
+        for i in 0..9 {
+            if (window[i].0 - window[i + 1].0).abs() > 1
+                || (window[i].1 - window[i + 1].1).abs() > 1
+            {
+                adjacent = false;
+                break;
+            }
+        }
+        if adjacent {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn detect_christmas_tree(robots: &mut Vec<Robot>, width: usize, height: usize) -> usize {
+    let mut seconds = 0;
+
+    loop {
+        seconds += 1;
+        simulate_robots(robots, width, height, 1);
+
+        // println!("Seconds: {}", seconds);
+
+        // draw(robots, width, height);
+
+        if are_many_robots_adjacent(robots) {
+            // draw(robots, width, height);
+
+            break;
+        }
+    }
+
+    seconds
 }
 
 fn main() -> std::io::Result<()> {
@@ -106,10 +158,13 @@ fn main() -> std::io::Result<()> {
 
     println!("Safety factor is {}", result);
 
-    // let mut robot = Robot::new((2, 4), (2, -3));
-    // robot.teleport(width, height, 5);
+    let mut robots = parse(&lines);
 
-    // println!("{:?}", robots);
+    let result2 = detect_christmas_tree(&mut robots, width, height);
+
+    draw(&robots, width, height);
+
+    println!("A christmas tree is made in {} seconds", result2);
 
     Ok(())
 }
