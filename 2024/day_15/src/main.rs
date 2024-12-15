@@ -151,6 +151,22 @@ impl Map {
 
         false
     }
+
+    fn double(&mut self) -> Map {
+        let new_map_data = self
+            .data
+            .iter()
+            .flat_map(|c| match c {
+                '#' => ['#', '#'],
+                'O' => ['[', ']'],
+                '.' => ['.', '.'],
+                '@' => ['@', '.'],
+                _ => panic!("Not sure"),
+            })
+            .collect();
+
+        Map::new(new_map_data, self.width * 2, self.height)
+    }
 }
 
 fn draw(map: &Map, robot: &Robot) {
@@ -166,7 +182,7 @@ fn draw(map: &Map, robot: &Robot) {
     }
 }
 
-fn parse(lines: &[String]) -> (Map, Robot, Vec<Direction>) {
+fn parse(lines: &[String]) -> (Map, Vec<Direction>) {
     let (map_lines, dir_lines) = lines.split_at(lines.iter().position(|l| l.is_empty()).unwrap());
 
     let grid_data = map_lines
@@ -177,22 +193,14 @@ fn parse(lines: &[String]) -> (Map, Robot, Vec<Direction>) {
     let height = map_lines.len();
     let width = map_lines[0].len();
 
-    let mut map = Map::new(grid_data, width, height);
-    let start_position = map
-        .find_first_position('@')
-        .expect("Cannot find start position");
-    map.set_char_at(start_position.0, start_position.1, '.');
-    let robot = Robot {
-        map: map.clone(),
-        position: start_position,
-    };
+    let map = Map::new(grid_data, width, height);
 
     let instructions = dir_lines
         .iter()
         .flat_map(|l| l.chars().map(Direction::from))
         .collect();
 
-    (map, robot, instructions)
+    (map, instructions)
 }
 
 struct Robot {
@@ -201,6 +209,19 @@ struct Robot {
 }
 
 impl Robot {
+    fn new(mut map: Map) -> Self {
+        let start_position = map
+            .find_first_position('@')
+            .expect("Cannot find start position");
+
+        map.set_char_at(start_position.0, start_position.1, '.');
+
+        Robot {
+            map: map,
+            position: start_position,
+        }
+    }
+
     fn walk(&mut self, dir: Direction) {
         let dir_vector = dir.to_point();
         let target_tile = (
@@ -245,7 +266,9 @@ fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
-    let (_, mut robot, instructions) = parse(&lines);
+    let (map, instructions) = parse(&lines);
+
+    let mut robot = Robot::new(map);
 
     follow_instructions(&mut robot, &instructions);
 
@@ -255,6 +278,16 @@ fn main() -> std::io::Result<()> {
     let result = get_gps(&robot.map);
 
     println!("The sum of all GPS coordinates is {}", result);
+
+    // let (_, mut robot, instructions) = parse(&lines);
+    // robot.map.double();
+
+    // follow_instructions(&mut robot, &instructions);
+
+    // // draw(&robot.map, &robot);
+    // // println!("{:?}", instructions);
+
+    // let result = get_gps(&robot.map);
 
     Ok(())
 }
