@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("The sum of all GPS coordinates is 10092\n");
+    assert.stdout("The sum of all GPS coordinates is 10092\nThe sum of all GPS coordinates with big boxes is 9021\n");
 
     Ok(())
 }

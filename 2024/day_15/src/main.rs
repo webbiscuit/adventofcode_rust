@@ -2,7 +2,7 @@ use std::io::{self, prelude::*};
 
 type Point = (isize, isize);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct Map {
     data: Vec<char>,
     width: usize,
@@ -64,10 +64,12 @@ impl Map {
     fn find_first_position(&self, needle: char) -> Option<(isize, isize)> {
         let ix = self.data.iter().position(|c| *c == needle);
 
+        // println!("IX {:?}", ix);
+
         ix.map(|ix| {
             (
                 ix as isize % self.width as isize,
-                ix as isize / self.height as isize,
+                ix as isize / self.width as isize,
             )
         })
     }
@@ -93,10 +95,11 @@ impl Map {
     }
 
     fn is_barrel(c: char) -> bool {
-        c == 'O'
+        c == 'O' || c == '[' || c == ']'
     }
 
     fn is_barrel_on_tile(&self, x: isize, y: isize) -> bool {
+        // println!("xy {} {} ", x, y);
         let c = self.get_char_at(x, y);
 
         Map::is_barrel(c.unwrap())
@@ -152,7 +155,7 @@ impl Map {
         false
     }
 
-    fn double(&mut self) -> Map {
+    fn double(&self) -> Map {
         let new_map_data = self
             .data
             .iter()
@@ -210,9 +213,13 @@ struct Robot {
 
 impl Robot {
     fn new(mut map: Map) -> Self {
+        // println!("{:?}", map);
+
         let start_position = map
             .find_first_position('@')
             .expect("Cannot find start position");
+
+        let start_position = (start_position.0, start_position.1);
 
         map.set_char_at(start_position.0, start_position.1, '.');
 
@@ -249,9 +256,9 @@ fn get_gps(map: &Map) -> usize {
     map.data
         .iter()
         .enumerate()
-        .map(|(p, c)| {
+        .map(|(p, _)| {
             let x = p % map.width;
-            let y = p / map.height;
+            let y = p / map.width;
 
             if map.is_barrel_on_tile(x as isize, y as isize) {
                 return 100 * y + x;
@@ -267,6 +274,7 @@ fn main() -> std::io::Result<()> {
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
     let (map, instructions) = parse(&lines);
+    let big_map = map.double();
 
     let mut robot = Robot::new(map);
 
@@ -279,15 +287,20 @@ fn main() -> std::io::Result<()> {
 
     println!("The sum of all GPS coordinates is {}", result);
 
-    // let (_, mut robot, instructions) = parse(&lines);
-    // robot.map.double();
-
+    let mut robot = Robot::new(big_map);
     // follow_instructions(&mut robot, &instructions);
+    robot.walk(Direction::Left);
+    // // robot.walk(Direction::Up);
+    // // robot.walk(Direction::Right);
+    // // robot.walk(Direction::Right);
 
-    // // draw(&robot.map, &robot);
-    // // println!("{:?}", instructions);
-
+    draw(&robot.map, &robot);
     // let result = get_gps(&robot.map);
+
+    println!(
+        "The sum of all GPS coordinates with big boxes is {}",
+        result
+    );
 
     Ok(())
 }
