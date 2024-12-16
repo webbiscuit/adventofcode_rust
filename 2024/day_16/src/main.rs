@@ -5,6 +5,7 @@ use std::{
 };
 
 type Point = (isize, isize);
+type Dir = (i8, i8);
 
 struct Map {
     data: Vec<char>,
@@ -44,14 +45,6 @@ impl Map {
             .copied()
     }
 
-    // fn set_char_at(&mut self, x: isize, y: isize, c: char) {
-    //     if !self.in_bounds(x, y) {
-    //         return;
-    //     }
-
-    //     self.data[(x as usize) + (y as usize) * self.width] = c;
-    // }
-
     fn is_obstacle(c: char) -> bool {
         c == '#'
     }
@@ -64,10 +57,6 @@ impl Map {
             _ => false,
         }
     }
-
-    // fn add_obstacle(&mut self, x: isize, y: isize) {
-    //     self.set_char_at(x, y, '#')
-    // }
 
     const ALL_DIRECTIONS: [(i8, i8); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
 
@@ -90,40 +79,40 @@ impl Map {
             .collect()
     }
 
-    fn calculate_distances_from_point(&self, source: Point) -> HashMap<Point, usize> {
-        // let mut distances = vec![(source, 0)];
-        let mut distances: HashMap<Point, usize> = HashMap::new();
-        distances.insert(source, 0);
+    // fn calculate_distances_from_point(&self, source: Point) -> HashMap<Point, usize> {
+    //     // let mut distances = vec![(source, 0)];
+    //     let mut distances: HashMap<Point, usize> = HashMap::new();
+    //     distances.insert(source, 0);
 
-        let mut explore_queue = vec![source];
+    //     let mut explore_queue = vec![source];
 
-        while let Some((x, y)) = explore_queue.pop() {
-            let neighbours = self.get_neighbours(x, y);
-            let valid_neighbours = neighbours
-                .into_iter()
-                .filter(|n| !distances.contains_key(n))
-                .collect::<Vec<_>>();
+    //     while let Some((x, y)) = explore_queue.pop() {
+    //         let neighbours = self.get_neighbours(x, y);
+    //         let valid_neighbours = neighbours
+    //             .into_iter()
+    //             .filter(|n| !distances.contains_key(n))
+    //             .collect::<Vec<_>>();
 
-            for n in valid_neighbours.iter() {
-                if !distances.contains_key(&n) {
-                    let this_distance = distances.get(&(x, y)).unwrap();
-                    distances.insert(*n, *this_distance + 1);
-                }
-            }
+    //         for n in valid_neighbours.iter() {
+    //             if !distances.contains_key(&n) {
+    //                 let this_distance = distances.get(&(x, y)).unwrap();
+    //                 distances.insert(*n, *this_distance + 1);
+    //             }
+    //         }
 
-            explore_queue.extend(valid_neighbours);
-        }
+    //         explore_queue.extend(valid_neighbours);
+    //     }
 
-        distances
-    }
+    //     distances
+    // }
 
     fn find_lowest_score(&self) -> usize {
         let start_dir = Self::ALL_DIRECTIONS[0];
         let mut steps_to_try = vec![((self.start, start_dir), 0)];
 
         // Scores from starting point to Point
-        let mut g_scores: HashMap<Point, usize> = HashMap::new();
-        g_scores.insert(self.start, 0);
+        let mut g_scores: HashMap<(Point, Dir), usize> = HashMap::new();
+        g_scores.insert((self.start, start_dir), 0);
 
         while !steps_to_try.is_empty() {
             let (ix, &(current_state, current_score)) = steps_to_try
@@ -136,8 +125,6 @@ impl Map {
             let (current_point, current_dir) = current_state;
 
             if current_point == self.end {
-                // println!("Best Path {:?}", g_scores);
-
                 return current_score;
             }
 
@@ -154,8 +141,12 @@ impl Map {
                 };
                 let tentative_g_score = current_score + move_cost;
 
-                if tentative_g_score < *g_scores.get(&neighbour).unwrap_or(&usize::MAX) {
-                    g_scores.insert(neighbour, tentative_g_score);
+                if tentative_g_score
+                    < *g_scores
+                        .get(&(neighbour, current_dir))
+                        .unwrap_or(&usize::MAX)
+                {
+                    g_scores.insert((neighbour, current_dir), tentative_g_score);
                     steps_to_try.push(((neighbour, neighbour_dir), tentative_g_score));
                 }
             }
@@ -210,8 +201,7 @@ fn main() -> std::io::Result<()> {
     // println!("{}", map);
     // println!("{:?} {:?}", map.start, map.end);
 
-    let distances = map.calculate_distances_from_point(map.end);
-
+    // let distances = map.calculate_distances_from_point(map.end);
     // println!("Distances {:?}", distances);
 
     let lowest_score = map.find_lowest_score();
@@ -220,5 +210,3 @@ fn main() -> std::io::Result<()> {
 
     Ok(())
 }
-
-// < 94448
