@@ -16,7 +16,8 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Minimum number of steps required is 22\n");
+    assert
+        .stdout("Minimum number of steps required is 22\nThe byte that prevents exit is (6, 1)\n");
 
     Ok(())
 }

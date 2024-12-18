@@ -110,7 +110,7 @@ fn drop_bytes_onto_map(map: &mut Map, byte_positions: &[Point]) {
     });
 }
 
-fn find_path_from_start_to_end(map: &Map) -> Vec<Point> {
+fn find_path_from_start_to_end(map: &Map) -> Option<Vec<Point>> {
     let mut visited: HashSet<Point> = HashSet::new();
     let mut came_from: HashMap<Point, Point> = HashMap::new();
     let mut explore_queue = VecDeque::new();
@@ -138,14 +138,17 @@ fn find_path_from_start_to_end(map: &Map) -> Vec<Point> {
 
     while current != map.start {
         path.push(current);
-        current = *came_from.get(&current).expect("Path reconstruction failed");
+        current = match came_from.get(&current) {
+            Some(&prev) => prev,
+            None => return None,
+        }
     }
 
     path.push(map.start);
     path.reverse();
 
     // println!("Path found: {:?}", path);
-    path
+    Some(path)
 }
 
 fn draw_path_on_map(map: &Map, path: &[Point]) {
@@ -186,8 +189,18 @@ fn main() -> std::io::Result<()> {
 
     // draw_path_on_map(&map, &shortest_path);
 
-    let result = shortest_path.len() - 1;
+    let result = shortest_path.unwrap().len() - 1;
     println!("Minimum number of steps required is {}", result);
+
+    for n in bytes_to_drop.. {
+        drop_bytes_onto_map(&mut map, &vec![byte_positions[n]]);
+        let shortest_path = find_path_from_start_to_end(&map);
+
+        if shortest_path.is_none() {
+            println!("The byte that prevents exit is {:?}", byte_positions[n]);
+            break;
+        }
+    }
 
     Ok(())
 }
