@@ -42,14 +42,25 @@ fn find_possible_patterns_cached(towels: &[Towel], patterns: &[Pattern]) -> Vec<
         .collect()
 }
 
+fn find_all_possible_pattern_combos_cached(towels: &[Towel], patterns: &[Pattern]) -> usize {
+    let mut cache = Cache::new();
+
+    patterns
+        .iter()
+        .map(|p| cache.all_combinations_possible_cached(towels, p))
+        .sum()
+}
+
 struct Cache {
     cached_pattern: HashMap<String, bool>,
+    cached_pattern_count: HashMap<String, usize>,
 }
 
 impl Cache {
     fn new() -> Cache {
         Cache {
             cached_pattern: HashMap::new(),
+            cached_pattern_count: HashMap::new(),
         }
     }
 
@@ -76,6 +87,30 @@ impl Cache {
             pattern.starts_with(t) && self.is_pattern_possible(towels, &pattern[t.len()..])
         })
     }
+
+    fn all_combinations_possible_cached(&mut self, towels: &[Towel], pattern: &str) -> usize {
+        // println!("Pattern {}", pattern);
+
+        if self.cached_pattern_count.contains_key(pattern) {
+            return self.cached_pattern_count[pattern];
+        }
+
+        if pattern.is_empty() {
+            return 1;
+        }
+
+        let mut count = 0;
+
+        for t in towels {
+            if pattern.starts_with(t) {
+                count += self.all_combinations_possible_cached(towels, &pattern[t.len()..]);
+            }
+        }
+
+        self.cached_pattern_count.insert(pattern.to_string(), count);
+
+        count
+    }
 }
 
 fn main() -> std::io::Result<()> {
@@ -92,6 +127,10 @@ fn main() -> std::io::Result<()> {
     // println!("Results: {:?}", result);
 
     println!("There are {} designs possible", result.len());
+
+    let result = find_all_possible_pattern_combos_cached(&towels, &patterns);
+
+    println!("There are {} possible combos", result);
 
     Ok(())
 }

@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("There are 6 designs possible\n");
+    assert.stdout("There are 6 designs possible\nThere are 16 possible combos\n");
 
     Ok(())
 }
