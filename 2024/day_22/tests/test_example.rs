@@ -14,7 +14,7 @@ fn test_example() -> Result<(), Box<dyn std::error::Error>> {
     file.read_to_string(&mut contents)?;
 
     let assert = cmd.write_stdin(contents).assert();
-    assert.stdout("Sum of 2000th generated number is 37327623\n");
+    assert.stdout("Sum of 2000th generated number is 37327623\nMost banana is 24\n");
 
     Ok(())
 }
