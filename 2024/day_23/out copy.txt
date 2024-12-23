@@ -1,0 +1,22 @@
+Triangles {, , , , , , , , , , }
+
+{"aq", "tb", "ub", "vc", "wq"}
+{"qp", "tc", "td", "wh", "yn"}
+
+aq,cg,yn {"aq", "cg", "yn"}
+aq,vc,wq {"aq", "vc", "wq"} 
+co,de,ka
+co,de,ta {"co", "de", "ka", "ta"}
+co,ka,ta
+de,ka,ta
+kh,qp,ub {"kh", "qp", "ub"}
+qp,td,wh {"qp", "td", "wh"}
+tb,vc,wq {"tb", "vc", "wq"}
+tc,td,wh {"tc", "td", "wh"}
+td,wh,yn {"td", "wh", "yn"}
+ub,vc,wq {"ub", "vc", "wq"}
+
+
+
+Triangles {{"qp", "tc", "td", "wh", "yn"}, {"co", "de", "ka", "ta"}, {"td", "wh", "yn"}, {"tc", "td", "wh"}, {"aq", "tb", "ub", "vc", "wq"}, {"qp", "td", "wh"}, {"tb", "vc", "wq"}}
+There are 7 sets of interconnected computers linking to a 't'

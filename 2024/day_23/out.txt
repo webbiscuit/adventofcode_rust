@@ -1,0 +1,68 @@
+Map {"kh": {"ub", "ta", "tc", "qp"}, "co": {"ta", "de", "ka", "tc"}, "de": {"ta", "cg", "ka", "co"}, "tb": {"cg", "ka", "vc", "wq"}, "ka": {"co", "tb", "ta", "de"}, "vc": {"wq", "ub", "tb", "aq"}, "qp": {"ub", "kh", "td", "wh"}, "yn": {"cg", "aq", "td", "wh"}, "tc": {"co", "td", "wh", "kh"}, "aq": {"cg", "yn", "vc", "wq"}, "wq": {"vc", "tb", "aq", "ub"}, "td": {"qp", "yn", "wh", "tc"}, "wh": {"qp", "td", "tc", "yn"}, "ta": {"de", "ka", "co", "kh"}, "ub": {"wq", "vc", "qp", "kh"}, "cg": {"aq", "tb", "yn", "de"}}
+Key kh V ub Shared {"kh", "qp", "ub"}
+Key kh V ta Shared {"kh", "ta"}
+Key kh V tc Shared {"kh", "tc"}
+Key kh V qp Shared {"kh", "qp", "ub"}
+Key co V ta Shared {"co", "de", "ka", "ta"}
+Key co V de Shared {"co", "de", "ka", "ta"}
+Key co V ka Shared {"co", "de", "ka", "ta"}
+Key co V tc Shared {"co", "tc"}
+Key de V ta Shared {"co", "de", "ka", "ta"}
+Key de V cg Shared {"cg", "de"}
+Key de V ka Shared {"co", "de", "ka", "ta"}
+Key de V co Shared {"co", "de", "ka", "ta"}
+Key tb V cg Shared {"cg", "tb"}
+Key tb V ka Shared {"ka", "tb"}
+Key tb V vc Shared {"tb", "vc", "wq"}
+Key tb V wq Shared {"tb", "vc", "wq"}
+Key ka V co Shared {"co", "de", "ka", "ta"}
+Key ka V tb Shared {"ka", "tb"}
+Key ka V ta Shared {"co", "de", "ka", "ta"}
+Key ka V de Shared {"co", "de", "ka", "ta"}
+Key vc V wq Shared {"aq", "tb", "ub", "vc", "wq"}
+Key vc V ub Shared {"ub", "vc", "wq"}
+Key vc V tb Shared {"tb", "vc", "wq"}
+Key vc V aq Shared {"aq", "vc", "wq"}
+Key qp V ub Shared {"kh", "qp", "ub"}
+Key qp V kh Shared {"kh", "qp", "ub"}
+Key qp V td Shared {"qp", "td", "wh"}
+Key qp V wh Shared {"qp", "td", "wh"}
+Key yn V cg Shared {"aq", "cg", "yn"}
+Key yn V aq Shared {"aq", "cg", "yn"}
+Key yn V td Shared {"td", "wh", "yn"}
+Key yn V wh Shared {"td", "wh", "yn"}
+Key tc V co Shared {"co", "tc"}
+Key tc V td Shared {"tc", "td", "wh"}
+Key tc V wh Shared {"tc", "td", "wh"}
+Key tc V kh Shared {"kh", "tc"}
+Key aq V cg Shared {"aq", "cg", "yn"}
+Key aq V yn Shared {"aq", "cg", "yn"}
+Key aq V vc Shared {"aq", "vc", "wq"}
+Key aq V wq Shared {"aq", "vc", "wq"}
+Key wq V vc Shared {"aq", "tb", "ub", "vc", "wq"}
+Key wq V tb Shared {"tb", "vc", "wq"}
+Key wq V aq Shared {"aq", "vc", "wq"}
+Key wq V ub Shared {"ub", "vc", "wq"}
+Key td V qp Shared {"qp", "td", "wh"}
+Key td V yn Shared {"td", "wh", "yn"}
+Key td V wh Shared {"qp", "tc", "td", "wh", "yn"}
+Key td V tc Shared {"tc", "td", "wh"}
+Key wh V qp Shared {"qp", "td", "wh"}
+Key wh V td Shared {"qp", "tc", "td", "wh", "yn"}
+Key wh V tc Shared {"tc", "td", "wh"}
+Key wh V yn Shared {"td", "wh", "yn"}
+Key ta V de Shared {"co", "de", "ka", "ta"}
+Key ta V ka Shared {"co", "de", "ka", "ta"}
+Key ta V co Shared {"co", "de", "ka", "ta"}
+Key ta V kh Shared {"kh", "ta"}
+Key ub V wq Shared {"ub", "vc", "wq"}
+Key ub V vc Shared {"ub", "vc", "wq"}
+Key ub V qp Shared {"kh", "qp", "ub"}
+Key ub V kh Shared {"kh", "qp", "ub"}
+Key cg V aq Shared {"aq", "cg", "yn"}
+Key cg V tb Shared {"cg", "tb"}
+Key cg V yn Shared {"aq", "cg", "yn"}
+Key cg V de Shared {"cg", "de"}
+Triangles {{"tc", "td", "wh"}, {"td", "wh", "yn"}, {"aq", "tb", "ub", "vc", "wq"}, {"qp", "tc", "td", "wh", "yn"}, {"co", "de", "ka", "ta"}, {"kh", "qp", "ub"}, {"aq", "vc", "wq"}, {"qp", "td", "wh"}, {"ub", "vc", "wq"}, {"aq", "cg", "yn"}, {"tb", "vc", "wq"}}
+Triangles {{"tb", "vc", "wq"}, {"qp", "td", "wh"}, {"qp", "tc", "td", "wh", "yn"}, {"td", "wh", "yn"}, {"co", "de", "ka", "ta"}, {"tc", "td", "wh"}, {"aq", "tb", "ub", "vc", "wq"}}
+There are 7 sets of interconnected computers linking to a 't'
