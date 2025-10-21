@@ -160,7 +160,7 @@ impl Computer {
     }
 
     fn step(&mut self) {
-        println!("{}", self);
+        // println!("{}", self);
 
         let operand = Operand::from(self.program[self.program_counter + 1]).unwrap();
         let instruction = Instruction::from(self.program[self.program_counter], operand).unwrap();
@@ -238,11 +238,43 @@ fn main() -> std::io::Result<()> {
 
     computer.run();
 
-    println!("{}", computer);
+    // println!("{}", computer);
 
     let output = computer.flush();
 
     println!("The program will output {}", output);
+
+    let mut found_a = None;
+
+    let mut a = 140737488355328 - (35184372088832 * 2);
+
+    loop {
+        let mut new_computer = Computer::new(a, 0, 0, computer.program.clone());
+
+        new_computer.run();
+
+        if new_computer
+            .output_buffer
+            .iter()
+            .map(|i| *i as u8)
+            .collect::<Vec<_>>()
+            == new_computer.program
+        {
+            found_a = Some(a);
+            break;
+        }
+
+        a += 8;
+
+        // a 8 outputs 2 byte2
+        // a 64 3 bytes
+        // a 512 4 bytes
+        // a 35184372088832 16 bytes
+
+        // println!("a: {} - {:?}", a, new_computer.output_buffer);
+    }
+
+    println!("The program self replicates when a is {:?}", found_a);
 
     Ok(())
 }

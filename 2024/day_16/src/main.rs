@@ -192,13 +192,44 @@ fn parse(lines: &[String]) -> Map {
     Map::new(&grid_data, width, height)
 }
 
+fn reconstruct_all_paths(
+    predecessors: &HashMap<(Point, Dir), Vec<(Point, Dir)>>,
+    start: (Point, Dir),
+    end: (Point, Dir),
+) -> Vec<Vec<Point>> {
+    let mut paths = Vec::new();
+    let mut current_path = Vec::new();
+    reconstruct_recursive(predecessors, start, end, &mut current_path, &mut paths);
+    paths
+}
+
+fn reconstruct_recursive(
+    predecessors: &HashMap<(Point, Dir), Vec<(Point, Dir)>>,
+    start: (Point, Dir),
+    current: (Point, Dir),
+    current_path: &mut Vec<Point>,
+    all_paths: &mut Vec<Vec<Point>>,
+) {
+    current_path.push(current.0);
+
+    if current == start {
+        all_paths.push(current_path.clone());
+    } else if let Some(parents) = predecessors.get(&current) {
+        for parent in parents {
+            reconstruct_recursive(predecessors, start, *parent, current_path, all_paths);
+        }
+    }
+
+    current_path.pop();
+}
+
 fn main() -> std::io::Result<()> {
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
     let map = parse(&lines);
 
-    // println!("{}", map);
+    println!("{}", map);
     // println!("{:?} {:?}", map.start, map.end);
 
     // let distances = map.calculate_distances_from_point(map.end);

@@ -9,7 +9,7 @@ struct Map {
     height: usize,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum Direction {
     Up,
     Down,
@@ -105,6 +105,17 @@ impl Map {
         Map::is_barrel(c.unwrap())
     }
 
+    fn is_scoring_barrel(c: char) -> bool {
+        c == 'O' || c == '['
+    }
+
+    fn is_scoring_barrel_on_tile(&self, x: isize, y: isize) -> bool {
+        // println!("xy {} {} ", x, y);
+        let c = self.get_char_at(x, y);
+
+        Map::is_scoring_barrel(c.unwrap())
+    }
+
     fn set_char_at(&mut self, x: isize, y: isize, c: char) {
         if !self.in_bounds(x, y) {
             return;
@@ -114,7 +125,9 @@ impl Map {
     }
 
     fn get_tiles_in_direction(&self, x: isize, y: isize, dir: Direction) -> Vec<(Point, char)> {
-        let mut points = Vec::new();
+        let c = self.get_char_at(x, y).unwrap();
+
+        let mut points = vec![((x, y), c)];
         let mut current_x = x;
         let mut current_y = y;
         let dir_point = dir.to_point();
@@ -135,19 +148,80 @@ impl Map {
         points
     }
 
+    // I think we need to call this iteratively, every time we hit a barrel
     fn push_barrel(&mut self, x: isize, y: isize, dir: Direction) -> bool {
         // Find the first gap in this direction before a wall
         let tiles = self.get_tiles_in_direction(x, y, dir);
 
-        // println!("Tiles {:?}", tiles);
-        for t in tiles {
+        let this_tile = self.get_char_at(x, y).unwrap();
+
+        let mut partner_tiles: Option<Vec<(Point, char)>> = None;
+
+        if this_tile == '[' {
+            partner_tiles = Some(self.get_tiles_in_direction(x + 1, y, dir));
+        } else if this_tile == ']' {
+            partner_tiles = Some(self.get_tiles_in_direction(x - 1, y, dir));
+        }
+
+        println!("Tiles {:?}", tiles);
+        for (ix, t) in tiles.iter().enumerate() {
             if t.1 == '#' {
                 return false;
             }
 
             if t.1 == '.' {
+                if let Some(partner_tiles) = partner_tiles.clone() {
+                    if dir == Direction::Up || dir == Direction::Down {
+                        let partner_gap = partner_tiles.iter().position(|(t, c)| *c == '#');
+
+                        if partner_gap.is_none() || partner_gap.unwrap() <= ix {
+                            return false;
+                        }
+                    }
+                }
+
+                for i in 0..ix {
+                    let target_tile = tiles[ix - i];
+                    let source_tile = tiles[ix - i - 1];
+
+                    println!("Target {:?}", target_tile);
+                    println!("Source {:?}", source_tile);
+
+                    let next_c = self
+                        .get_char_at(source_tile.0 .0, source_tile.0 .1)
+                        .unwrap();
+
+                    self.set_char_at(target_tile.0 .0, target_tile.0 .1, next_c);
+                }
+
                 self.set_char_at(x, y, '.');
-                self.set_char_at(t.0 .0, t.0 .1, 'O');
+
+                if let Some(partner_tiles) = partner_tiles {
+                    if dir == Direction::Up || dir == Direction::Down {
+                        for i in 0..ix {
+                            let target_tile = partner_tiles[ix - i];
+                            let source_tile = partner_tiles[ix - i - 1];
+
+                            println!("Target {:?}", target_tile);
+                            println!("Source {:?}", source_tile);
+
+                            let next_c = self
+                                .get_char_at(source_tile.0 .0, source_tile.0 .1)
+                                .unwrap();
+
+                            self.set_char_at(target_tile.0 .0, target_tile.0 .1, next_c);
+                        }
+
+                        if partner_tiles[0].1 == '[' {
+                            self.set_char_at(x - 1, y, '.');
+                        }
+
+                        if partner_tiles[0].1 == ']' {
+                            self.set_char_at(x + 1, y, '.');
+                        }
+                    }
+                }
+
                 return true;
             }
         }
@@ -260,7 +334,7 @@ fn get_gps(map: &Map) -> usize {
             let x = p % map.width;
             let y = p / map.width;
 
-            if map.is_barrel_on_tile(x as isize, y as isize) {
+            if map.is_scoring_barrel_on_tile(x as isize, y as isize) {
                 return 100 * y + x;
             }
 
@@ -276,26 +350,29 @@ fn main() -> std::io::Result<()> {
     let (map, instructions) = parse(&lines);
     let big_map = map.double();
 
-    let mut robot = Robot::new(map);
+    // let mut robot = Robot::new(map);
 
-    follow_instructions(&mut robot, &instructions);
+    // follow_instructions(&mut robot, &instructions);
 
-    // draw(&robot.map, &robot);
-    // println!("{:?}", instructions);
+    // let result = get_gps(&robot.map);
 
-    let result = get_gps(&robot.map);
-
-    println!("The sum of all GPS coordinates is {}", result);
+    // println!("The sum of all GPS coordinates is {}", result);
 
     let mut robot = Robot::new(big_map);
-    // follow_instructions(&mut robot, &instructions);
-    robot.walk(Direction::Left);
-    // // robot.walk(Direction::Up);
-    // // robot.walk(Direction::Right);
-    // // robot.walk(Direction::Right);
+    follow_instructions(&mut robot, &instructions);
+    // robot.walk(Direction::Left);
+    // robot.walk(Direction::Down);
+    // robot.walk(Direction::Left);
+    // robot.walk(Direction::Up);
+    // robot.walk(Direction::Left);
+    // robot.walk(Direction::Up);
+    // robot.walk(Direction::Right);
+    // robot.walk(Direction::Down);
+    // robot.walk(Direction::Down);
+    // robot.walk(Direction::Left);
 
     draw(&robot.map, &robot);
-    // let result = get_gps(&robot.map);
+    let result = get_gps(&robot.map);
 
     println!(
         "The sum of all GPS coordinates with big boxes is {}",

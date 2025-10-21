@@ -15,6 +15,30 @@ impl Keypad {
         }
     }
 
+    // TODO
+    fn all_routes(&self, from: char, to: char) -> Vec<char> {
+        let mut route = vec![];
+
+        let from_ix = self
+            .key_map
+            .iter()
+            .position(|k| k.as_ref() == Some(&from))
+            .unwrap();
+        let from_pos = (from_ix % self.width, from_ix / self.width);
+
+        let to_ix = self
+            .key_map
+            .iter()
+            .position(|k| k.as_ref() == Some(&to))
+            .unwrap();
+
+        let to_pos = (to_ix % self.width, to_ix / self.width);
+
+        route.push('A');
+
+        route
+    }
+
     fn route(&self, from: char, to: char) -> Vec<char> {
         let mut route = vec![];
 
@@ -42,46 +66,59 @@ impl Keypad {
 
         let has_gap_on_row = gap_row == from_pos.1 || gap_row == to_pos.1;
 
-        let is_two_spaces_away = (from_pos.0 as isize - to_pos.0 as isize).abs() == 2;
+        // We need to maximise sequences to make presses easier
 
-        if has_gap_on_row {
+        // let is_two_spaces_away = (from_pos.0 as isize - to_pos.0 as isize).abs() == 2;
+
+        let prefer_l_r = ((to_pos.1 as isize) - (from_pos.1 as isize)).abs()
+            > ((to_pos.0 as isize) - (from_pos.0 as isize)).abs();
+
+        if has_gap_on_row && !prefer_l_r {
             if (to_pos.1 as isize) - (from_pos.1 as isize) < 0 {
                 for _ in 0..((from_pos.1 as isize) - (to_pos.1 as isize)).abs() {
                     route.push('^');
                 }
-            } else {
+            }
+
+            if (to_pos.1 as isize) - (from_pos.1 as isize) > 0 {
                 for _ in 0..((from_pos.1 as isize) - (to_pos.1 as isize)).abs() {
                     route.push('v');
+                }
+            }
+
+            if (to_pos.0 as isize) - (from_pos.0 as isize) > 0 {
+                for _ in 0..((from_pos.0 as isize) - (to_pos.0 as isize)).abs() {
+                    route.push('>');
                 }
             }
 
             if (to_pos.0 as isize) - (from_pos.0 as isize) < 0 {
                 for _ in 0..((from_pos.0 as isize) - (to_pos.0 as isize)).abs() {
                     route.push('<');
-                }
-            } else {
-                for _ in 0..((from_pos.0 as isize) - (to_pos.0 as isize)).abs() {
-                    route.push('>');
                 }
             }
         } else {
+            if (to_pos.0 as isize) - (from_pos.0 as isize) > 0 {
+                for _ in 0..((from_pos.0 as isize) - (to_pos.0 as isize)).abs() {
+                    route.push('>');
+                }
+            }
+
             if (to_pos.0 as isize) - (from_pos.0 as isize) < 0 {
                 for _ in 0..((from_pos.0 as isize) - (to_pos.0 as isize)).abs() {
                     route.push('<');
                 }
-            } else {
-                for _ in 0..((from_pos.0 as isize) - (to_pos.0 as isize)).abs() {
-                    route.push('>');
+            }
+
+            if (to_pos.1 as isize) - (from_pos.1 as isize) > 0 {
+                for _ in 0..((from_pos.1 as isize) - (to_pos.1 as isize)).abs() {
+                    route.push('v');
                 }
             }
 
             if (to_pos.1 as isize) - (from_pos.1 as isize) < 0 {
                 for _ in 0..((from_pos.1 as isize) - (to_pos.1 as isize)).abs() {
                     route.push('^');
-                }
-            } else {
-                for _ in 0..((from_pos.1 as isize) - (to_pos.1 as isize)).abs() {
-                    route.push('v');
                 }
             }
         }
@@ -226,3 +263,4 @@ fn main() -> std::io::Result<()> {
 // < 235218
 // < 226566
 // < 233106
+// ! 225994

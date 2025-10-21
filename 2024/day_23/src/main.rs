@@ -92,7 +92,8 @@ fn find_largest_clique_network(links: &[ComputerLink]) -> HashSet<ComputerName> 
     let nodes: Vec<_> = computer_map.keys().cloned().collect();
 
     // Iterate over all subsets of nodes
-    for subset_size in 2..=nodes.len() {
+    for subset_size in 3..5 {
+        // for subset_size in 2..=nodes.len() {
         for subset in nodes.iter().cloned().combinations(subset_size) {
             let subset_set: HashSet<_> = subset.into_iter().collect();
             if subset_set.len() > largest_clique.len() && is_clique(&subset_set, &computer_map) {
