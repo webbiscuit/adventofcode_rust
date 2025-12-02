@@ -1,11 +1,11 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
 #[test]
 fn test_example() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("day_0x")?;
+    let mut cmd = cargo_bin_cmd!("day_0x")?;
 
     let mut file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     file_path.push("example.txt");
